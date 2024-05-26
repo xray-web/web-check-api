@@ -5,6 +5,7 @@ go 1.21.3
 require github.com/gin-gonic/gin v1.10.0
 
 require (
+	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/chromedp/cdproto v0.0.0-20240519224452-66462be74baa // indirect
 	github.com/chromedp/chromedp v0.9.5 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
@@ -31,6 +32,7 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
