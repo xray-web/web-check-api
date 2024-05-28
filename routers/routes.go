@@ -25,7 +25,7 @@ var quality controllers.QualityController
 var rank controllers.RankController
 var redirects controllers.RedirectsController
 var socialTags controllers.SocialTagsController
-var techStack controllers.TechStackController
+var tls controllers.TlsController
 
 func WebCheckRoutes(route *gin.Engine) {
 	api := route.Group("/api")
@@ -49,7 +49,7 @@ func WebCheckRoutes(route *gin.Engine) {
 		api.GET("/rank", rank.GetRankHandler)
 		api.GET("/redirects", redirects.GetRedirectsHandler)
 		api.GET("/social-tags", socialTags.GetSocialTagsHandler)
-		api.GET("/tech-stack", techStack.TechStackHandler)
+		api.GET("/tls", tls.TlsHandler)
 
 	}
 }
