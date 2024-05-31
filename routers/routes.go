@@ -7,7 +7,6 @@ import (
 )
 
 var header controllers.HeaderController
-var archive controllers.ArchivesController
 var cookies controllers.CookiesController
 var carbon controllers.CarbonController
 var blockLists controllers.BlockListsController
@@ -26,12 +25,12 @@ var rank controllers.RankController
 var redirects controllers.RedirectsController
 var socialTags controllers.SocialTagsController
 var tls controllers.TlsController
+var trace controllers.TraceRouteController
 
 func WebCheckRoutes(route *gin.Engine) {
 	api := route.Group("/api")
 	{
 		api.GET("/headers", header.GetHeaders)
-		api.GET("/archives", archive.ArchivesHandler)
 		api.GET("/cookies", cookies.CookiesHandler)
 		api.GET("/carbon", carbon.CarbonHandler)
 		api.GET("/block-lists", blockLists.BlockListsHandler)
@@ -50,6 +49,7 @@ func WebCheckRoutes(route *gin.Engine) {
 		api.GET("/redirects", redirects.GetRedirectsHandler)
 		api.GET("/social-tags", socialTags.GetSocialTagsHandler)
 		api.GET("/tls", tls.TlsHandler)
+		api.GET("/trace-route", trace.TracerouteHandler)
 
 	}
 }
