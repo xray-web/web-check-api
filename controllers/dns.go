@@ -21,15 +21,15 @@ type ARecord struct {
 
 // DNSResponse holds various DNS records.
 type DNSResponse struct {
-	A     ARecord  `json:"A"`
-	AAAA  []string `json:"AAAA"`
-	MX    []string `json:"MX"`
-	TXT   []string `json:"TXT"`
-	NS    []string `json:"NS"`
-	CNAME []string `json:"CNAME"`
-	SOA   []string `json:"SOA"`
-	SRV   []string `json:"SRV"`
-	PTR   []string `json:"PTR"`
+	A     []ARecord `json:"A"`
+	AAAA  []string  `json:"AAAA"`
+	MX    []string  `json:"MX"`
+	TXT   []string  `json:"TXT"`
+	NS    []string  `json:"NS"`
+	CNAME []string  `json:"CNAME"`
+	SOA   string    `json:"SOA"`
+	SRV   []string  `json:"SRV"`
+	PTR   []string  `json:"PTR"`
 }
 
 func resolveDNSRecords(ctx context.Context, hostname string) (*DNSResponse, error) {
@@ -43,9 +43,10 @@ func resolveDNSRecords(ctx context.Context, hostname string) (*DNSResponse, erro
 		},
 	}
 
-	var aRecord ARecord
+	var aRecords []ARecord
 	var aaaaRecords, nsRecords, ptrRecords, mxRecords []string
-	var txtRecords, cnameRecords, soaRecords, srvRecords []string
+	var txtRecords, cnameRecords, srvRecords []string
+	var soaRecord string
 	var err error
 
 	// Resolve A and AAAA records
@@ -53,62 +54,70 @@ func resolveDNSRecords(ctx context.Context, hostname string) (*DNSResponse, erro
 	if err == nil {
 		for _, ip := range lookupResults {
 			if ip.IP.To4() != nil {
-				aRecord = ARecord{
+				aRecords = append(aRecords, ARecord{
 					Address: ip.IP.String(),
 					Family:  4,
-				}
-				aaaaRecords = append(aaaaRecords, ip.IP.String())
+				})
 			} else if ip.IP.To16() != nil {
-				mxRecords = append(mxRecords, ip.IP.String())
+				aaaaRecords = append(aaaaRecords, ip.IP.String())
 			}
 		}
 	}
 
+	// Resolve MX records
+	mxResults, _ := r.LookupMX(ctx, hostname)
+	for _, mx := range mxResults {
+		mxRecords = append(mxRecords, fmt.Sprintf("%s %d", mx.Host, mx.Pref))
+	}
+
+	// Resolve TXT records
 	txtResults, _ := r.LookupTXT(ctx, hostname)
 	txtRecords = append(txtRecords, txtResults...)
 
+	// Resolve NS records
 	nsResults, _ := r.LookupNS(ctx, hostname)
 	for _, ns := range nsResults {
 		nsRecords = append(nsRecords, ns.Host)
 	}
 
+	// Resolve CNAME record
 	cname, _ := r.LookupCNAME(ctx, hostname)
 	if cname != "" {
 		cnameRecords = append(cnameRecords, cname)
 	}
 
-	// SOA records are not directly supported in Go's net package
-
+	// Resolve SRV records
 	_, srvResults, _ := r.LookupSRV(ctx, "", "", hostname)
 	for _, srv := range srvResults {
-		srvRecords = append(srvRecords, srv.Target)
+		srvRecords = append(srvRecords, fmt.Sprintf("%s %d %d %d", srv.Target, srv.Port, srv.Priority, srv.Weight))
 	}
 
+	// Resolve PTR records
 	ptrResults, _ := r.LookupAddr(ctx, hostname)
 	ptrRecords = append(ptrRecords, ptrResults...)
 
 	return &DNSResponse{
-		A:     aRecord,
+		A:     aRecords,
 		AAAA:  aaaaRecords,
 		MX:    mxRecords,
 		TXT:   txtRecords,
 		NS:    nsRecords,
 		CNAME: cnameRecords,
-		SOA:   soaRecords,
+		SOA:   soaRecord,
 		SRV:   srvRecords,
 		PTR:   ptrRecords,
 	}, err
 }
 
 func (ctrl *DnsController) DnsHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
+	rawURL := c.Query("url")
+	if rawURL == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
 		return
 	}
 
 	// Extract the hostname from the URL
-	hostname := url
+	hostname := rawURL
 	if strings.HasPrefix(hostname, "http://") || strings.HasPrefix(hostname, "https://") {
 		hostname = strings.ReplaceAll(hostname, "http://", "")
 		hostname = strings.ReplaceAll(hostname, "https://", "")
@@ -126,26 +135,6 @@ func (ctrl *DnsController) DnsHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error resolving DNS: %v", err)})
 		return
-	}
-
-	// Ensure that TXT, NS, SOA, SRV, PTR are empty arrays if they are nil
-	if dnsResponse.MX == nil {
-		dnsResponse.MX = []string{}
-	}
-	if dnsResponse.TXT == nil {
-		dnsResponse.TXT = []string{}
-	}
-	if dnsResponse.NS == nil {
-		dnsResponse.NS = []string{}
-	}
-	if dnsResponse.SOA == nil {
-		dnsResponse.SOA = []string{}
-	}
-	if dnsResponse.SRV == nil {
-		dnsResponse.SRV = []string{}
-	}
-	if dnsResponse.PTR == nil {
-		dnsResponse.PTR = []string{}
 	}
 
 	c.JSON(http.StatusOK, dnsResponse)
