@@ -54,98 +54,56 @@ func checkWAF(url string) (wafResponse, error) {
 
 	headers := resp.Header
 
-	for header, value := range headers {
-		if strings.Contains(header, "server") && strings.Contains(value[0], "cloudflare") {
-			return wafResponse{HasWaf: true, Waf: cloudflare}, nil
-		}
+	for header, values := range headers {
+		lowerHeader := strings.ToLower(header)
 
-		if strings.Contains(header, "x-powered-by") && strings.Contains(value[0], "AWS Lambda") {
-			return wafResponse{HasWaf: true, Waf: awsWAF}, nil
-		}
+		for _, value := range values {
+			lowerValue := strings.ToLower(value)
 
-		if strings.Contains(header, "server") && strings.Contains(value[0], "AkamaiGHost") {
-			return wafResponse{HasWaf: true, Waf: akamai}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "Sucuri") {
-			return wafResponse{HasWaf: true, Waf: sucuri}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "BarracudaWAF") {
-			return wafResponse{HasWaf: true, Waf: barracuda}, nil
-		}
-
-		if strings.Contains(header, "server") && (strings.Contains(value[0], "F5 BIG-IP") || strings.Contains(value[0], "BIG-IP")) {
-			return wafResponse{HasWaf: true, Waf: f5}, nil
-		}
-
-		_, sucuriId := headers[http.CanonicalHeaderKey("x-sucuri-id")]
-		_, sucuriCache := headers[http.CanonicalHeaderKey("x-sucuri-cache")]
-
-		if sucuriId || sucuriCache {
-			return wafResponse{HasWaf: true, Waf: sucuriProxy}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "FortiWeb") {
-			return wafResponse{HasWaf: true, Waf: fortinet}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "Imperva") {
-			return wafResponse{HasWaf: true, Waf: imperva}, nil
-		}
-
-		if _, exists := headers[http.CanonicalHeaderKey("x-protected-by")]; exists && strings.Contains(headers[http.CanonicalHeaderKey("x-protected-by")][0], "Sqreen") {
-			return wafResponse{HasWaf: true, Waf: sqreen}, nil
-		}
-
-		if _, exists := headers[http.CanonicalHeaderKey("x-waf-event-info")]; exists {
-			return wafResponse{HasWaf: true, Waf: reblaze}, nil
-		}
-
-		if _, exists := headers[http.CanonicalHeaderKey("set-cookie")]; exists && strings.Contains(headers[http.CanonicalHeaderKey("set-cookie")][0], "_citrix_ns_id") {
-			return wafResponse{HasWaf: true, Waf: citrix}, nil
-		}
-
-		_, deniedReason := headers[http.CanonicalHeaderKey("x-denied-reason")]
-		_, requestedMethod := headers[http.CanonicalHeaderKey("x-wzws-requested-method")]
-
-		if deniedReason || requestedMethod {
-			return wafResponse{HasWaf: true, Waf: wzb}, nil
-		}
-
-		if _, exists := headers["x-webcoment"]; exists {
-			return wafResponse{HasWaf: true, Waf: webcoment}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "Yundun") {
-			return wafResponse{HasWaf: true, Waf: yundun}, nil
-		}
-
-		_, wafInfo := headers["x-yd-waf-info"]
-		_, ydInfo := headers["x-yd-info"]
-
-		if wafInfo || ydInfo {
-			return wafResponse{HasWaf: true, Waf: yundun}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "Safe3WAF") {
-			return wafResponse{HasWaf: true, Waf: safe3}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "NAXSI") {
-			return wafResponse{HasWaf: true, Waf: naxsi}, nil
-		}
-
-		if _, exists := headers["x-datapower-transactionid"]; exists {
-			return wafResponse{HasWaf: true, Waf: ibm}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "QRATOR") {
-			return wafResponse{HasWaf: true, Waf: qrator}, nil
-		}
-
-		if strings.Contains(header, "server") && strings.Contains(value[0], "ddos-guard") {
-			return wafResponse{HasWaf: true, Waf: ddosGuard}, nil
+			switch {
+			case lowerHeader == "server" && strings.Contains(lowerValue, "cloudflare"):
+				return wafResponse{HasWaf: true, Waf: cloudflare}, nil
+			case lowerHeader == "x-powered-by" && strings.Contains(lowerValue, "aws lambda"):
+				return wafResponse{HasWaf: true, Waf: awsWAF}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "akamaighost"):
+				return wafResponse{HasWaf: true, Waf: akamai}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "sucuri"):
+				return wafResponse{HasWaf: true, Waf: sucuri}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "barracudawaf"):
+				return wafResponse{HasWaf: true, Waf: barracuda}, nil
+			case lowerHeader == "server" && (strings.Contains(lowerValue, "f5 big-ip") || strings.Contains(lowerValue, "big-ip")):
+				return wafResponse{HasWaf: true, Waf: f5}, nil
+			case lowerHeader == "x-sucuri-id" || lowerHeader == "x-sucuri-cache":
+				return wafResponse{HasWaf: true, Waf: sucuriProxy}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "fortiweb"):
+				return wafResponse{HasWaf: true, Waf: fortinet}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "imperva"):
+				return wafResponse{HasWaf: true, Waf: imperva}, nil
+			case lowerHeader == "x-protected-by" && strings.Contains(lowerValue, "sqreen"):
+				return wafResponse{HasWaf: true, Waf: sqreen}, nil
+			case lowerHeader == "x-waf-event-info":
+				return wafResponse{HasWaf: true, Waf: reblaze}, nil
+			case lowerHeader == "set-cookie" && strings.Contains(lowerValue, "_citrix_ns_id"):
+				return wafResponse{HasWaf: true, Waf: citrix}, nil
+			case lowerHeader == "x-denied-reason" || lowerHeader == "x-wzws-requested-method":
+				return wafResponse{HasWaf: true, Waf: wzb}, nil
+			case lowerHeader == "x-webcoment":
+				return wafResponse{HasWaf: true, Waf: webcoment}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "yundun"):
+				return wafResponse{HasWaf: true, Waf: yundun}, nil
+			case lowerHeader == "x-yd-waf-info" || lowerHeader == "x-yd-info":
+				return wafResponse{HasWaf: true, Waf: yundun}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "safe3waf"):
+				return wafResponse{HasWaf: true, Waf: safe3}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "naxsi"):
+				return wafResponse{HasWaf: true, Waf: naxsi}, nil
+			case lowerHeader == "x-datapower-transactionid":
+				return wafResponse{HasWaf: true, Waf: ibm}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "qrator"):
+				return wafResponse{HasWaf: true, Waf: qrator}, nil
+			case lowerHeader == "server" && strings.Contains(lowerValue, "ddos-guard"):
+				return wafResponse{HasWaf: true, Waf: ddosGuard}, nil
+			}
 		}
 	}
 

@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,9 +69,23 @@ type Blocklist struct {
 }
 
 func isDomainBlocked(domain, serverIP string) bool {
-	ips, err := net.LookupIP(domain)
+	resolver := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{
+				Timeout: time.Second * 3,
+			}
+			return d.DialContext(ctx, network, serverIP+":53")
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	ips, err := resolver.LookupIP(ctx, "ip4", domain)
 	if err != nil {
-		return true
+		// if there's an error, consider it not blocked
+		return false
 	}
 
 	for _, ip := range ips {
@@ -106,13 +122,13 @@ func contains(slice []string, str string) bool {
 }
 
 func (ctrl *BlockListsController) BlockListsHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
+	rawURL := c.Query("url")
+	if rawURL == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing URL parameter"})
 		return
 	}
 
-	domain, err := urlToDomain(url)
+	domain, err := urlToDomain(rawURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL"})
 		return
