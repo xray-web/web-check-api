@@ -2,12 +2,12 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/gin-gonic/gin"
 )
@@ -28,29 +28,47 @@ func getChromedpCookies(url string) ([]map[string]interface{}, error) {
 	ctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
-	var cookiesStr string
-
 	// Create a timeout context for chromedp actions
 	timeoutCtx, cancel := context.WithTimeout(ctx, 10*time.Second) // Increased timeout
 	defer cancel()
 
+	var cookies []*network.Cookie
 	err := chromedp.Run(timeoutCtx,
 		chromedp.Navigate(url),
 		chromedp.WaitReady("body", chromedp.ByQuery),
-		chromedp.Evaluate(`document.cookie`, &cookiesStr),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			cookieParams := network.GetCookies().WithUrls([]string{url})
+			var err error
+			cookies, err = cookieParams.Do(ctx)
+			return err
+		}),
 	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var cookies []map[string]interface{}
-	err = json.Unmarshal([]byte(cookiesStr), &cookies)
-	if err != nil {
-		return nil, err
+	var cookiesList []map[string]interface{}
+	for _, c := range cookies {
+		cookie := map[string]interface{}{
+			"name":    c.Name,
+			"value":   c.Value,
+			"domain":  c.Domain,
+			"path":    c.Path,
+			"expires": c.Expires,
+			// "size":         cdp.CookieSize(c),
+			"httpOnly": c.HTTPOnly,
+			"secure":   c.Secure,
+			"session":  c.Session,
+			"sameSite": c.SameSite.String(),
+			"priority": c.Priority.String(),
+			// "sameParty":    c.SameParty,
+			"sourceScheme": c.SourceScheme.String(),
+		}
+		cookiesList = append(cookiesList, cookie)
 	}
 
-	return cookies, nil
+	return cookiesList, nil
 }
 
 // Function to handle the cookies endpoint
