@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,37 +40,47 @@ func (ctrl *PortsController) GetPortsHandler(c *gin.Context) {
 }
 
 func checkPorts(domain string) (openPorts []int, failedPorts []int) {
-	timeout := 9000 * time.Millisecond
-	delay := 1500 * time.Millisecond
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 
 	openPorts = make([]int, 0)
 	failedPorts = make([]int, 0)
 
-	done := make(chan bool)
+	timeout := 1500 * time.Millisecond
+	overallTimeout := 9000 * time.Millisecond
+
+	done := make(chan struct{})
 
 	go func() {
 		for _, port := range PORTS {
-			if checkPort(domain, port, delay) {
-				openPorts = append(openPorts, port)
-			} else {
-				failedPorts = append(failedPorts, port)
-			}
+			wg.Add(1)
+			go func(port int) {
+				defer wg.Done()
+				if checkPort(domain, port, timeout) {
+					mu.Lock()
+					openPorts = append(openPorts, port)
+					mu.Unlock()
+				} else {
+					mu.Lock()
+					failedPorts = append(failedPorts, port)
+					mu.Unlock()
+				}
+			}(port)
 		}
-		done <- true
+		wg.Wait()
+		close(done)
 	}()
 
 	select {
 	case <-done:
-		// Completed within timeout
-	case <-time.After(timeout):
-		// Timeout reached
-		remainingPorts := make([]int, 0)
-		for _, p := range PORTS {
-			if !containsInt(openPorts, p) && !containsInt(failedPorts, p) {
-				remainingPorts = append(remainingPorts, p)
+	case <-time.After(overallTimeout):
+		mu.Lock()
+		for _, port := range PORTS {
+			if !containsInt(openPorts, port) && !containsInt(failedPorts, port) {
+				failedPorts = append(failedPorts, port)
 			}
 		}
-		failedPorts = append(failedPorts, remainingPorts...)
+		mu.Unlock()
 	}
 
 	sort.Ints(openPorts)
