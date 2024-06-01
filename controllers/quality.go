@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,13 +20,20 @@ func (ctrl *QualityController) GetQualityHandler(c *gin.Context) {
 		return
 	}
 
+	formattedURL, err := formatURL(urlParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	apiKey := os.Getenv("GOOGLE_CLOUD_API_KEY")
 	if apiKey == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Missing Google API. You need to set the `GOOGLE_CLOUD_API_KEY` environment variable"})
 		return
 	}
 
-	endpoint := fmt.Sprintf("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=%s&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO&category=PWA&strategy=mobile&key=%s", url.QueryEscape(urlParam), apiKey)
+	encodedURL := url.QueryEscape(formattedURL)
+	endpoint := fmt.Sprintf("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=%s&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO&category=PWA&strategy=mobile&key=%s", encodedURL, apiKey)
 
 	resp, err := http.Get(endpoint)
 	if err != nil {
@@ -35,7 +43,12 @@ func (ctrl *QualityController) GetQualityHandler(c *gin.Context) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		c.JSON(resp.StatusCode, gin.H{"error": "Failed to fetch the Pagespeed data"})
+		var errorResult map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&errorResult); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(resp.StatusCode, errorResult)
+		}
 		return
 	}
 
@@ -46,4 +59,20 @@ func (ctrl *QualityController) GetQualityHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+func formatURL(input string) (string, error) {
+	// Add http scheme if missing
+	if !strings.HasPrefix(input, "http://") && !strings.HasPrefix(input, "https://") {
+		input = "http://" + input
+	}
+
+	// Parse the URL to ensure it's valid
+	parsedURL, err := url.Parse(input)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %v", err)
+	}
+
+	// Rebuild the URL to ensure it matches the required format
+	return parsedURL.String(), nil
 }
