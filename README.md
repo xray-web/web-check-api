@@ -1,7 +1,18 @@
-To run project excute this command:
 
-go run main.go
+# Web Check API
 
-To run test case:
+> [!NOTE]
+> This is a very early work in progress, and is not yet feature complete or production ready.
+> Stay tuned!
 
-go test
+### Start Server
+
+```
+make run
+```
+
+### Run Tests
+
+```
+make test
+```
