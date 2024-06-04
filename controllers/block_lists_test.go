@@ -1,4 +1,4 @@
-package tests
+package controllers_test
 
 import (
 	"net/http"

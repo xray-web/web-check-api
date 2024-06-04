@@ -1,4 +1,4 @@
-package tests
+package controllers_test
 
 import (
 	"encoding/json"
@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetLinksHandler(t *testing.T) {
+func TestLegacyRankHandler(t *testing.T) {
 	router := gin.Default()
 
-	ctrl := &controllers.GetLinksController{}
+	ctrl := &controllers.LegacyRankController{}
 
-	router.GET("/get-links", ctrl.GetLinksHandler)
+	router.GET("/legacy-rank", ctrl.LegacyRankHandler)
 
-	req, err := http.NewRequest("GET", "/get-links?url=www.google.com", nil)
+	req, err := http.NewRequest("GET", "/legacy-rank?url=www.google.com", nil)
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
@@ -27,11 +27,13 @@ func TestGetLinksHandler(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	var response controllers.LinkResponse
+	var response controllers.RankResponse
 	err = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
 	assert.NotNil(t, response)
-	assert.NotNil(t, response.Internal)
-	assert.NotNil(t, response.External)
+
+	assert.Equal(t, "www.google.com", response.Domain)
+
+	assert.True(t, response.IsFound || !response.IsFound)
 }

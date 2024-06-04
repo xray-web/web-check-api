@@ -1,4 +1,4 @@
-package tests
+package controllers_test
 
 import (
 	"net/http"
@@ -9,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TestDnssecHandler(t *testing.T) {
+func TestDnsHandler(t *testing.T) {
 	router := gin.Default()
-	dnssecCtrl := &controllers.DnssecController{}
-	router.GET("/dnssec", dnssecCtrl.DnssecHandler)
+	dnsCtrl := &controllers.DnsController{}
+	router.GET("/dns", dnsCtrl.DnsHandler)
 
 	testCases := []struct {
 		name         string
@@ -26,14 +26,14 @@ func TestDnssecHandler(t *testing.T) {
 		},
 		{
 			name:         "Valid URL",
-			url:          "example.com",
+			url:          "https://example.com",
 			expectedCode: http.StatusOK,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest("GET", "/dnssec?url="+tc.url, nil)
+			req, err := http.NewRequest("GET", "/dns?url="+tc.url, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
