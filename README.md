@@ -4,5 +4,4 @@ go run main.go
 
 To run test case:
 
-cd tests
 go test
