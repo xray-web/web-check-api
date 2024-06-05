@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +15,12 @@ import (
 
 type BlockListsController struct{}
 
-var DNS_SERVERS = []struct {
+type dnsServer struct {
 	Name string
 	IP   string
-}{
+}
+
+var DNS_SERVERS = []dnsServer{
 	{Name: "AdGuard", IP: "176.103.130.130"},
 	{Name: "AdGuard Family", IP: "176.103.130.132"},
 	{Name: "CleanBrowsing Adult", IP: "185.228.168.10"},
@@ -96,17 +99,39 @@ func isDomainBlocked(domain, serverIP string) bool {
 }
 
 func checkDomainAgainstDNSServers(domain string) []Blocklist {
+	var lock sync.Mutex
+	var wg sync.WaitGroup
+	limit := make(chan struct{}, 5)
+
 	var results []Blocklist
 
 	for _, server := range DNS_SERVERS {
-		// TODO: concurrently ping these IPs as this is a slow check
-		isBlocked := isDomainBlocked(domain, server.IP)
-		results = append(results, Blocklist{
-			Server:    server.Name,
-			ServerIP:  server.IP,
-			IsBlocked: isBlocked,
-		})
+		wg.Add(1)
+		go func(server dnsServer) {
+			limit <- struct{}{}
+			defer func() {
+				<-limit
+				wg.Done()
+			}()
+
+			isBlocked := isDomainBlocked(domain, server.IP)
+			lock.Lock()
+			defer lock.Unlock()
+			results = append(results, Blocklist{
+				Server:    server.Name,
+				ServerIP:  server.IP,
+				IsBlocked: isBlocked,
+			})
+		}(server)
+		// // TODO: concurrently ping these IPs as this is a slow check
+		// isBlocked := isDomainBlocked(domain, server.IP)
+		// results = append(results, Blocklist{
+		// 	Server:    server.Name,
+		// 	ServerIP:  server.IP,
+		// 	IsBlocked: isBlocked,
+		// })
 	}
+	wg.Wait()
 
 	return results
 }
