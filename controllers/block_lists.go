@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"sync"
 	"time"
 
@@ -126,6 +127,9 @@ func checkDomainAgainstDNSServers(domain string) []Blocklist {
 	}
 	wg.Wait()
 
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Server > results[j].Server
+	})
 	return results
 }
 
