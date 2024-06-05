@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -88,19 +90,16 @@ func isDomainBlocked(domain, serverIP string) bool {
 		return false
 	}
 
-	for _, ip := range ips {
-		if contains(knownBlockIPs, ip.String()) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(ips, func(ip net.IP) bool {
+		return slices.Contains(knownBlockIPs, ip.String())
+	})
 }
 
 func checkDomainAgainstDNSServers(domain string) []Blocklist {
 	var results []Blocklist
 
 	for _, server := range DNS_SERVERS {
+		// TODO: concurrently ping these IPs as this is a slow check
 		isBlocked := isDomainBlocked(domain, server.IP)
 		results = append(results, Blocklist{
 			Server:    server.Name,
@@ -110,15 +109,6 @@ func checkDomainAgainstDNSServers(domain string) []Blocklist {
 	}
 
 	return results
-}
-
-func contains(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
 }
 
 func (ctrl *BlockListsController) BlockListsHandler(c *gin.Context) {
@@ -144,4 +134,23 @@ func urlToDomain(rawURL string) (string, error) {
 		return "", err
 	}
 	return parsedURL.Hostname(), nil
+}
+
+func HandleBlockLists() http.Handler {
+	type Response struct {
+		BlockLists []Blocklist `json:"blocklists"`
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawURL := r.URL.Query().Get("url")
+		if rawURL == "" {
+			JSONError(w, "Missing URL parameter", http.StatusBadRequest)
+			return
+		}
+		domain, err := urlToDomain(rawURL)
+		if err != nil {
+			JSONError(w, "Invalid URL", http.StatusBadRequest)
+			return
+		}
+		json.NewEncoder(w).Encode(Response{BlockLists: checkDomainAgainstDNSServers(domain)})
+	})
 }
