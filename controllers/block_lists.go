@@ -123,13 +123,6 @@ func checkDomainAgainstDNSServers(domain string) []Blocklist {
 				IsBlocked: isBlocked,
 			})
 		}(server)
-		// // TODO: concurrently ping these IPs as this is a slow check
-		// isBlocked := isDomainBlocked(domain, server.IP)
-		// results = append(results, Blocklist{
-		// 	Server:    server.Name,
-		// 	ServerIP:  server.IP,
-		// 	IsBlocked: isBlocked,
-		// })
 	}
 	wg.Wait()
 
