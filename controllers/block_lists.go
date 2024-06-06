@@ -2,9 +2,13 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
+	"sort"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,10 +16,12 @@ import (
 
 type BlockListsController struct{}
 
-var DNS_SERVERS = []struct {
+type dnsServer struct {
 	Name string
 	IP   string
-}{
+}
+
+var DNS_SERVERS = []dnsServer{
 	{Name: "AdGuard", IP: "176.103.130.130"},
 	{Name: "AdGuard Family", IP: "176.103.130.132"},
 	{Name: "CleanBrowsing Adult", IP: "185.228.168.10"},
@@ -88,37 +94,43 @@ func isDomainBlocked(domain, serverIP string) bool {
 		return false
 	}
 
-	for _, ip := range ips {
-		if contains(knownBlockIPs, ip.String()) {
-			return true
-		}
-	}
-
-	return false
+	return slices.ContainsFunc(ips, func(ip net.IP) bool {
+		return slices.Contains(knownBlockIPs, ip.String())
+	})
 }
 
 func checkDomainAgainstDNSServers(domain string) []Blocklist {
+	var lock sync.Mutex
+	var wg sync.WaitGroup
+	limit := make(chan struct{}, 5)
+
 	var results []Blocklist
 
 	for _, server := range DNS_SERVERS {
-		isBlocked := isDomainBlocked(domain, server.IP)
-		results = append(results, Blocklist{
-			Server:    server.Name,
-			ServerIP:  server.IP,
-			IsBlocked: isBlocked,
-		})
-	}
+		wg.Add(1)
+		go func(server dnsServer) {
+			limit <- struct{}{}
+			defer func() {
+				<-limit
+				wg.Done()
+			}()
 
+			isBlocked := isDomainBlocked(domain, server.IP)
+			lock.Lock()
+			defer lock.Unlock()
+			results = append(results, Blocklist{
+				Server:    server.Name,
+				ServerIP:  server.IP,
+				IsBlocked: isBlocked,
+			})
+		}(server)
+	}
+	wg.Wait()
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Server > results[j].Server
+	})
 	return results
-}
-
-func contains(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
 }
 
 func (ctrl *BlockListsController) BlockListsHandler(c *gin.Context) {
@@ -144,4 +156,23 @@ func urlToDomain(rawURL string) (string, error) {
 		return "", err
 	}
 	return parsedURL.Hostname(), nil
+}
+
+func HandleBlockLists() http.Handler {
+	type Response struct {
+		BlockLists []Blocklist `json:"blocklists"`
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawURL := r.URL.Query().Get("url")
+		if rawURL == "" {
+			JSONError(w, "Missing URL parameter", http.StatusBadRequest)
+			return
+		}
+		domain, err := urlToDomain(rawURL)
+		if err != nil {
+			JSONError(w, "Invalid URL", http.StatusBadRequest)
+			return
+		}
+		json.NewEncoder(w).Encode(Response{BlockLists: checkDomainAgainstDNSServers(domain)})
+	})
 }
