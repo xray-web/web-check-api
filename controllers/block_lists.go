@@ -165,12 +165,12 @@ func HandleBlockLists() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rawURL := r.URL.Query().Get("url")
 		if rawURL == "" {
-			JSONError(w, "Missing URL parameter", http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 		domain, err := urlToDomain(rawURL)
 		if err != nil {
-			JSONError(w, "Invalid URL", http.StatusBadRequest)
+			JSONError(w, ErrInvalidURL, http.StatusBadRequest)
 			return
 		}
 		json.NewEncoder(w).Encode(Response{BlockLists: checkDomainAgainstDNSServers(domain)})

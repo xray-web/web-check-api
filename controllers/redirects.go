@@ -55,3 +55,25 @@ func getRedirects(rawurl string) ([]string, error) {
 
 	return redirects, nil
 }
+
+func HandleGetRedirects() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		urlParam := r.URL.Query().Get("url")
+		if urlParam == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
+			urlParam = "http://" + urlParam // Assuming HTTP by default
+		}
+
+		redirects, err := getRedirects(urlParam)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, KV{"redirects": redirects}, http.StatusOK)
+	})
+}

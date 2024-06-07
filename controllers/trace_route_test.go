@@ -48,3 +48,37 @@ func TestTraceRouteHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleTraceRoute(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name           string
+		urlParam       string
+		expectedStatus int
+		expectedBody   gin.H
+	}{
+		{
+			name:           "Missing URL parameter",
+			urlParam:       "",
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   gin.H{"error": "missing URL parameter"},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			req := httptest.NewRequest("GET", "/trace-route?url="+tc.urlParam, nil)
+			rec := httptest.NewRecorder()
+			controllers.HandleTraceRoute().ServeHTTP(rec, req)
+
+			assert.Equal(t, tc.expectedStatus, rec.Code)
+
+			var responseBody gin.H
+			err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedBody, responseBody)
+		})
+	}
+}

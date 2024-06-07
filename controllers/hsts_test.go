@@ -35,3 +35,21 @@ func TestHstsHandler(t *testing.T) {
 	assert.Empty(t, response.HSTSHeader)
 
 }
+
+func TestHandleHsts(t *testing.T) {
+	t.Parallel()
+	req := httptest.NewRequest("GET", "/check-hsts?url=example.com", nil)
+	rec := httptest.NewRecorder()
+	controllers.HandleHsts().ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response controllers.HSTSResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, response)
+	assert.Equal(t, "Site does not serve any HSTS headers.", response.Message)
+	assert.False(t, response.Compatible)
+	assert.Empty(t, response.HSTSHeader)
+}

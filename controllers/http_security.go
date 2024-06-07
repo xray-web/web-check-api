@@ -52,3 +52,21 @@ func checkHTTPSecurity(url string) (HTTPSecurityResponse, error) {
 		ContentSecurityPolicy: headers.Get("content-security-policy") != "",
 	}, nil
 }
+
+func HandleHttpSecurity() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.URL.Query().Get("url")
+		if url == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		result, err := checkHTTPSecurity(url)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, result, http.StatusOK)
+	})
+}

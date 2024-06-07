@@ -106,3 +106,23 @@ func containsInt(slice []int, item int) bool {
 	}
 	return false
 }
+
+func HandleGetPorts() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.URL.Query().Get("url")
+		if url == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		domain := strings.TrimPrefix(url, "http://")
+		domain = strings.TrimPrefix(domain, "https://")
+
+		openPorts, failedPorts := checkPorts(domain)
+
+		JSON(w, KV{
+			"openPorts":   openPorts,
+			"failedPorts": failedPorts,
+		}, http.StatusOK)
+	})
+}

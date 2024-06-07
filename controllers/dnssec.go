@@ -74,3 +74,21 @@ func resolveDNS(domain string) (map[string]interface{}, error) {
 
 	return records, nil
 }
+
+func HandleDnsSec() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		domain := r.URL.Query().Get("url")
+		if domain == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		records, err := resolveDNS(domain)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, records, http.StatusOK)
+	})
+}

@@ -125,3 +125,21 @@ func (ctrl *FirewallController) FirewallHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
+func HandleFirewall() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		domain := r.URL.Query().Get("url")
+		if domain == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		result, err := checkWAF(domain)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, result, http.StatusOK)
+	})
+}
