@@ -1,31 +1,31 @@
 package routers
 
 import (
-	"web-check-go/controllers"
+	"github.com/xray-web/web-check-api/handlers"
 
 	"github.com/gin-gonic/gin"
 )
 
-var header controllers.HeaderController
-var cookies controllers.CookiesController
-var carbon controllers.CarbonController
-var blockLists controllers.BlockListsController
-var dnsServer controllers.DnsServerController
-var dns controllers.DnsController
-var dnssec controllers.DnssecController
-var firewall controllers.FirewallController
-var getIP controllers.GetIPController
-var hsts controllers.HstsController
-var httpSecurity controllers.HttpSecurityController
-var legacyRank controllers.LegacyRankController
-var getLinks controllers.GetLinksController
-var ports controllers.PortsController
-var quality controllers.QualityController
-var rank controllers.RankController
-var redirects controllers.RedirectsController
-var socialTags controllers.SocialTagsController
-var tls controllers.TlsController
-var trace controllers.TraceRouteController
+var header handlers.HeaderController
+var cookies handlers.CookiesController
+var carbon handlers.CarbonController
+var blockLists handlers.BlockListsController
+var dnsServer handlers.DnsServerController
+var dns handlers.DnsController
+var dnssec handlers.DnssecController
+var firewall handlers.FirewallController
+var getIP handlers.GetIPController
+var hsts handlers.HstsController
+var httpSecurity handlers.HttpSecurityController
+var legacyRank handlers.LegacyRankController
+var getLinks handlers.GetLinksController
+var ports handlers.PortsController
+var quality handlers.QualityController
+var rank handlers.RankController
+var redirects handlers.RedirectsController
+var socialTags handlers.SocialTagsController
+var tls handlers.TlsController
+var trace handlers.TraceRouteController
 
 func WebCheckRoutes(route *gin.Engine) {
 	api := route.Group("/api")

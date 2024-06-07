@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"web-check-go/middleware"
+	"github.com/xray-web/web-check-api/middleware"
 
 	"github.com/gin-gonic/gin"
 )

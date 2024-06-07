@@ -1,8 +1,8 @@
 package main
 
 import (
-	"web-check-go/config"
-	"web-check-go/routers"
+	"github.com/xray-web/web-check-api/config"
+	"github.com/xray-web/web-check-api/routers"
 )
 
 func main() {
