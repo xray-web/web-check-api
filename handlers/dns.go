@@ -7,11 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
-
-type DnsController struct{}
 
 // ARecord represents an A record.
 type ARecord struct {
@@ -107,37 +103,6 @@ func resolveDNSRecords(ctx context.Context, hostname string) (*DNSResponse, erro
 		SRV:   srvRecords,
 		PTR:   ptrRecords,
 	}, err
-}
-
-func (ctrl *DnsController) DnsHandler(c *gin.Context) {
-	rawURL := c.Query("url")
-	if rawURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	// Extract the hostname from the URL
-	hostname := rawURL
-	if strings.HasPrefix(hostname, "http://") || strings.HasPrefix(hostname, "https://") {
-		hostname = strings.ReplaceAll(hostname, "http://", "")
-		hostname = strings.ReplaceAll(hostname, "https://", "")
-		if parts := strings.Split(hostname, "/"); len(parts) > 0 {
-			hostname = parts[0]
-		}
-	}
-
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
-	// Resolve DNS records
-	dnsResponse, err := resolveDNSRecords(ctx, hostname)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error resolving DNS: %v", err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, dnsResponse)
 }
 
 func HandleDNS() http.Handler {

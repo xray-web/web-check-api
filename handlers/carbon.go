@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type CarbonData struct {
@@ -31,8 +29,6 @@ type CarbonData struct {
 	CleanerThan int    `json:"cleanerThan"`
 	ScanUrl     string `json:"scanUrl"`
 }
-
-type CarbonController struct{}
 
 // Function to get the HTML size of the website
 func getHtmlSize(ctx context.Context, url string) (int, error) {
@@ -94,39 +90,6 @@ func getCarbonData(ctx context.Context, sizeInBytes int) (*CarbonData, error) {
 	}
 
 	return &carbonData, nil
-}
-
-// Handler for the /carbon endpoint
-func (ctrl *CarbonController) CarbonHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing 'url' query parameter"})
-		return
-	}
-
-	sizeInBytes, err := getHtmlSize(c.Request.Context(), url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error getting HTML size: %v", err)})
-		return
-	}
-
-	carbonData, err := getCarbonData(c.Request.Context(), sizeInBytes)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error getting carbon data: %v", err)})
-		return
-	}
-
-	if carbonData.Statistics.AdjustedBytes == 0 {
-		c.JSON(http.StatusOK, gin.H{"skipped": "Not enough info to get carbon data"})
-		return
-	}
-	if carbonData.Statistics.Energy == 0 {
-		c.JSON(http.StatusOK, gin.H{"skipped": "Not enough info to get carbon data"})
-		return
-	}
-
-	carbonData.ScanUrl = url
-	c.JSON(http.StatusOK, carbonData)
 }
 
 func HandleCarbon() http.Handler {

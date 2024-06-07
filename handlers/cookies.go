@@ -9,10 +9,7 @@ import (
 
 	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
-	"github.com/gin-gonic/gin"
 )
-
-type CookiesController struct{}
 
 // Function to get cookies using chromedp
 func getChromedpCookies(url string) ([]map[string]interface{}, error) {
@@ -69,49 +66,6 @@ func getChromedpCookies(url string) ([]map[string]interface{}, error) {
 	}
 
 	return cookiesList, nil
-}
-
-// Function to handle the cookies endpoint
-func (ctrl *CookiesController) CookiesHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing 'url' query parameter"})
-		return
-	}
-
-	// Ensure the URL includes a scheme
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = "http://" + url
-	}
-
-	var headerCookies []string
-	var clientCookies []map[string]interface{}
-
-	// Fetch headers using http.Get
-	resp, err := http.Get(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Request failed: %v", err)})
-		return
-	}
-	defer resp.Body.Close()
-
-	headerCookies = resp.Header["Set-Cookie"]
-
-	// Fetch client cookies using chromedp
-	clientCookies, err = getChromedpCookies(url)
-	if err != nil {
-		clientCookies = nil
-	}
-
-	if len(headerCookies) == 0 && (len(clientCookies) == 0) {
-		c.JSON(http.StatusOK, gin.H{"skipped": "No cookies"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"headerCookies": headerCookies,
-		"clientCookies": clientCookies,
-	})
 }
 
 func HandleCookies() http.Handler {

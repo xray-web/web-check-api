@@ -12,6 +12,7 @@ func CORS(h http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Expose-Headers", "Content-Length")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Content-Type", "application/json")
 
 		if r.Method == http.MethodOptions {
 			w.Write([]byte{})

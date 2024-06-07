@@ -10,11 +10,7 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
-
-type BlockListsController struct{}
 
 type dnsServer struct {
 	Name string
@@ -131,23 +127,6 @@ func checkDomainAgainstDNSServers(domain string) []Blocklist {
 		return results[i].Server > results[j].Server
 	})
 	return results
-}
-
-func (ctrl *BlockListsController) BlockListsHandler(c *gin.Context) {
-	rawURL := c.Query("url")
-	if rawURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing URL parameter"})
-		return
-	}
-
-	domain, err := urlToDomain(rawURL)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL"})
-		return
-	}
-
-	results := checkDomainAgainstDNSServers(domain)
-	c.JSON(http.StatusOK, gin.H{"blocklists": results})
 }
 
 func urlToDomain(rawURL string) (string, error) {

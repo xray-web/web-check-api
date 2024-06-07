@@ -10,11 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
-
-type LegacyRankController struct{}
 
 const (
 	fileURL      = "https://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip"
@@ -25,22 +21,6 @@ type RankResponse struct {
 	Domain  string `json:"domain"`
 	Rank    string `json:"rank"`
 	IsFound bool   `json:"isFound"`
-}
-
-func (ctrl *LegacyRankController) LegacyRankHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	result, err := checkLegacyRank(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 func checkLegacyRank(urlStr string) (RankResponse, error) {

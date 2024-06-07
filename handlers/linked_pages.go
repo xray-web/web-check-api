@@ -8,11 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"golang.org/x/net/html"
 )
-
-type GetLinksController struct{}
 
 type LinkResponse struct {
 	Internal []string `json:"internal"`
@@ -26,40 +23,6 @@ type ErrorResponse struct {
 func (e ErrorResponse) Error() string {
 	b, _ := json.Marshal(e)
 	return string(b)
-}
-
-func (ctrl *GetLinksController) GetLinksHandler(c *gin.Context) {
-	targetURL := c.Query("url")
-	if targetURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	// Ensure the URL has a scheme
-	if !strings.HasPrefix(targetURL, "http://") && !strings.HasPrefix(targetURL, "https://") {
-		targetURL = "http://" + targetURL
-	}
-
-	internalLinks, externalLinks, err := getLinks(targetURL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if len(internalLinks) == 0 && len(externalLinks) == 0 {
-		c.JSON(http.StatusBadRequest, ErrorResponse{
-			Skipped: "No internal or external links found. " +
-				"This may be due to the website being dynamically rendered, using a client-side framework (like React), and without SSR enabled. " +
-				"That would mean that the static HTML returned from the HTTP request doesn't contain any meaningful content for Web-Check to analyze. " +
-				"You can rectify this by using a headless browser to render the page instead.",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, LinkResponse{
-		Internal: internalLinks,
-		External: externalLinks,
-	})
 }
 
 func getLinks(targetURL string) ([]string, []string, error) {
