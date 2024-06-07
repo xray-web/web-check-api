@@ -26,7 +26,8 @@ func TestHandleGetHeaders(t *testing.T) {
 		rec := httptest.NewRecorder()
 		HandleGetHeaders().ServeHTTP(rec, req)
 
-		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.JSONEq(t, `{"error": "invalid URL"}`, rec.Body.String())
 	})
 
 	t.Run("valid url", func(t *testing.T) {
