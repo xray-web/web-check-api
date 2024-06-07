@@ -2,22 +2,25 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 )
 
 func HandleGetHeaders() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL := r.URL.Query().Get("url")
+		if rawURL == "" {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		// Ensure the URL has a scheme
-		if !(len(url) >= 7 && (url[:7] == "http://" || url[:8] == "https://")) {
-			url = "http://" + url
+		// Parse and validate the URL
+		parsedURL, err := url.ParseRequestURI(rawURL)
+		if err != nil || !(parsedURL.Scheme == "http" || parsedURL.Scheme == "https") {
+			JSONError(w, ErrInvalidURL, http.StatusBadRequest)
+			return
 		}
 
-		resp, err := http.Get(url)
+		resp, err := http.Get(parsedURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
