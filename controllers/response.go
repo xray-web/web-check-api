@@ -16,3 +16,11 @@ func JSONError(w http.ResponseWriter, err string, code int) {
 		Error: err,
 	})
 }
+
+type KV map[string]any
+
+func JSON(w http.ResponseWriter, v any, code int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(v)
+}

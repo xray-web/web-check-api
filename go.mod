@@ -1,6 +1,6 @@
 module web-check-go
 
-go 1.21.3
+go 1.22.4
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240602235142-49d0e97b7881
