@@ -1,4 +1,4 @@
-module web-check-go
+module github.com/xray-web/web-check-api
 
 go 1.22.4
 
