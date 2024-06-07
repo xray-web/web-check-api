@@ -133,19 +133,19 @@ func HandleCarbon() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		url := r.URL.Query().Get("url")
 		if url == "" {
-			JSONError(w, "Missing 'url' query parameter", http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
 		sizeInBytes, err := getHtmlSize(r.Context(), url)
 		if err != nil {
-			JSONError(w, fmt.Sprintf("Error getting HTML size: %v", err), http.StatusInternalServerError)
+			JSONError(w, fmt.Errorf("error getting HTML size: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		carbonData, err := getCarbonData(r.Context(), sizeInBytes)
 		if err != nil {
-			JSONError(w, fmt.Sprintf("Error getting carbon data: %v", err), http.StatusInternalServerError)
+			JSONError(w, fmt.Errorf("error getting carbon data: %v", err), http.StatusInternalServerError)
 			return
 		}
 

@@ -113,3 +113,50 @@ func (ctrl *CookiesController) CookiesHandler(c *gin.Context) {
 		"clientCookies": clientCookies,
 	})
 }
+
+func HandleCookies() http.Handler {
+	type Response struct {
+		HeaderCookies []string         `json:"headerCookies"`
+		ClientCookies []map[string]any `json:"clientCookies"`
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.URL.Query().Get("url")
+		if url == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+		// Ensure the URL includes a scheme
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			url = "http://" + url
+		}
+
+		var headerCookies []string
+		var clientCookies []map[string]interface{}
+
+		// Fetch headers using http.Get
+		resp, err := http.Get(url)
+		if err != nil {
+			JSONError(w, fmt.Errorf("request failed: %v", err), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		headerCookies = resp.Header["Set-Cookie"]
+
+		// Fetch client cookies using chromedp
+		clientCookies, err = getChromedpCookies(url)
+		if err != nil {
+			clientCookies = nil
+		}
+
+		if len(headerCookies) == 0 && (len(clientCookies) == 0) {
+			JSON(w, KV{"skipped": "No cookies"}, http.StatusOK)
+			return
+		}
+		JSON(w, Response{
+			HeaderCookies: headerCookies,
+			ClientCookies: clientCookies,
+		}, http.StatusOK)
+
+	})
+}

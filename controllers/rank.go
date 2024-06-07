@@ -89,3 +89,13 @@ func getAuth() map[string]string {
 
 	return nil
 }
+
+func HandleGetRank() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.URL.Query().Get("url")
+		if url == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+	})
+}

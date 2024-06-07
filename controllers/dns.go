@@ -139,3 +139,36 @@ func (ctrl *DnsController) DnsHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dnsResponse)
 }
+
+func HandleDNS() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rawURL := r.URL.Query().Get("url")
+		if rawURL == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		// Extract the hostname from the URL
+		hostname := rawURL
+		if strings.HasPrefix(hostname, "http://") || strings.HasPrefix(hostname, "https://") {
+			hostname = strings.ReplaceAll(hostname, "http://", "")
+			hostname = strings.ReplaceAll(hostname, "https://", "")
+			if parts := strings.Split(hostname, "/"); len(parts) > 0 {
+				hostname = parts[0]
+			}
+		}
+
+		// Create a context with timeout
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		// Resolve DNS records
+		dnsResponse, err := resolveDNSRecords(ctx, hostname)
+		if err != nil {
+			JSONError(w, fmt.Errorf("error resolving DNS: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, dnsResponse, http.StatusOK)
+	})
+}

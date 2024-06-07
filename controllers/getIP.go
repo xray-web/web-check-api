@@ -44,3 +44,22 @@ func (ctrl *GetIPController) GetIPHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
+func HandleGetIP() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.URL.Query().Get("url")
+		if url == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		address := strings.ReplaceAll(strings.ReplaceAll(url, "https://", ""), "http://", "")
+		result, err := lookupAsync(address)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, result, http.StatusOK)
+	})
+}

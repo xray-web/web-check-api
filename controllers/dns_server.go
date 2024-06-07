@@ -90,3 +90,34 @@ func (ctrl *DnsServerController) DnsServerHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func HandleDNSServer() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.URL.Query().Get("url")
+		if url == "" {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
+			return
+		}
+
+		// Extract the domain from the URL
+		domain := strings.ReplaceAll(url, "http://", "")
+		domain = strings.ReplaceAll(domain, "https://", "")
+		domain = strings.TrimSuffix(domain, "/")
+
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		results, err := resolveDNSServer(ctx, domain)
+		if err != nil {
+			JSONError(w, fmt.Errorf("error resolving DNS: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		response := Response{
+			Domain: domain,
+			DNS:    results,
+		}
+
+		JSON(w, response, http.StatusOK)
+	})
+}

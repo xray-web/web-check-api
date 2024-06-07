@@ -59,7 +59,7 @@ func TestHandleBlockLists(t *testing.T) {
 		controllers.HandleBlockLists().ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		assert.JSONEq(t, `{"error": "Missing URL parameter"}`, rec.Body.String())
+		assert.JSONEq(t, `{"error": "missing URL parameter"}`, rec.Body.String())
 	})
 
 	t.Run("blocked domain", func(t *testing.T) {
