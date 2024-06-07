@@ -3,11 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
-
-type HttpSecurityController struct{}
 
 type HTTPSecurityResponse struct {
 	StrictTransportPolicy bool `json:"strictTransportPolicy"`
@@ -15,22 +11,6 @@ type HTTPSecurityResponse struct {
 	XContentTypeOptions   bool `json:"xContentTypeOptions"`
 	XXSSProtection        bool `json:"xXSSProtection"`
 	ContentSecurityPolicy bool `json:"contentSecurityPolicy"`
-}
-
-func (ctrl *HttpSecurityController) HttpSecurityHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	result, err := checkHTTPSecurity(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 func checkHTTPSecurity(url string) (HTTPSecurityResponse, error) {

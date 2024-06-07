@@ -5,32 +5,12 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
-
-type HstsController struct{}
 
 type HSTSResponse struct {
 	Message    string `json:"message"`
 	Compatible bool   `json:"compatible"`
 	HSTSHeader string `json:"hstsHeader"`
-}
-
-func (ctrl *HstsController) HstsHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	result, err := checkHSTS(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 func checkHSTS(url string) (HSTSResponse, error) {

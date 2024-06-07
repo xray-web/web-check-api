@@ -4,11 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
-
-type FirewallController struct{}
 
 const (
 	cloudflare  = "Cloudflare"
@@ -108,22 +104,6 @@ func checkWAF(url string) (wafResponse, error) {
 	}
 
 	return wafResponse{HasWaf: false}, nil
-}
-
-func (ctrl *FirewallController) FirewallHandler(c *gin.Context) {
-	domain := c.Query("url")
-	if domain == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	result, err := checkWAF(domain)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 func HandleFirewall() http.Handler {

@@ -10,6 +10,4 @@ import (
 func main() {
 	s := server.New(config.New())
 	log.Println(s.Run())
-	// router := routers.Routes()
-	// config.ServerConfig(router)
 }

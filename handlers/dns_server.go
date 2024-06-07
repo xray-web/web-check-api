@@ -7,11 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
-
-type DnsServerController struct{}
 
 // Result holds the information for each resolved address.
 type Result struct {
@@ -60,35 +56,6 @@ func resolveDNSServer(ctx context.Context, domain string) ([]Result, error) {
 		results = append(results, result)
 	}
 	return results, nil
-}
-
-func (ctrl *DnsServerController) DnsServerHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	// Extract the domain from the URL
-	domain := strings.ReplaceAll(url, "http://", "")
-	domain = strings.ReplaceAll(domain, "https://", "")
-	domain = strings.TrimSuffix(domain, "/")
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-
-	results, err := resolveDNSServer(ctx, domain)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error resolving DNS: %v", err)})
-		return
-	}
-
-	response := Response{
-		Domain: domain,
-		DNS:    results,
-	}
-
-	c.JSON(http.StatusOK, response)
 }
 
 func HandleDNSServer() http.Handler {

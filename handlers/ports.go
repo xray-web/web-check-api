@@ -8,35 +8,13 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
-
-type PortsController struct{}
 
 var PORTS = []int{
 	20, 21, 22, 23, 25, 53, 80, 67, 68, 69,
 	110, 119, 123, 143, 156, 161, 162, 179, 194,
 	389, 443, 587, 993, 995,
 	3000, 3306, 3389, 5060, 5900, 8000, 8080, 8888,
-}
-
-func (ctrl *PortsController) GetPortsHandler(c *gin.Context) {
-	url := c.Query("url")
-	if url == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	domain := strings.TrimPrefix(url, "http://")
-	domain = strings.TrimPrefix(domain, "https://")
-
-	openPorts, failedPorts := checkPorts(domain)
-
-	c.JSON(http.StatusOK, gin.H{
-		"openPorts":   openPorts,
-		"failedPorts": failedPorts,
-	})
 }
 
 func checkPorts(domain string) (openPorts []int, failedPorts []int) {

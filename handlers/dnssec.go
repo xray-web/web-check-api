@@ -6,29 +6,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
-type DnssecController struct{}
-
 const dnsGoogleURL = "https://dns.google/resolve"
-
-func (ctrl *DnssecController) DnssecHandler(c *gin.Context) {
-	domain := c.Query("url")
-	if domain == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url parameter is required"})
-		return
-	}
-
-	records, err := resolveDNS(domain)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, records)
-}
 
 func resolveDNS(domain string) (map[string]interface{}, error) {
 	dnsTypes := []string{"DNSKEY", "DS", "RRSIG"}
