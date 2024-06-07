@@ -7,6 +7,7 @@ import (
 
 	"github.com/xray-web/web-check-api/config"
 	"github.com/xray-web/web-check-api/handlers"
+	"github.com/xray-web/web-check-api/middleware"
 )
 
 type Server struct {
@@ -51,5 +52,5 @@ func (s *Server) Run() error {
 
 	addr := fmt.Sprintf("%s:%s", s.conf.Host, s.conf.Port)
 	log.Printf("Server started, listening on: %v\n", addr)
-	return http.ListenAndServe(addr, s.mux)
+	return http.ListenAndServe(addr, middleware.CORS(s.mux))
 }
