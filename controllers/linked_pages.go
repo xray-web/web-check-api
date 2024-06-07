@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -20,6 +21,11 @@ type LinkResponse struct {
 
 type ErrorResponse struct {
 	Skipped string `json:"skipped"`
+}
+
+func (e ErrorResponse) Error() string {
+	b, _ := json.Marshal(e)
+	return string(b)
 }
 
 func (ctrl *GetLinksController) GetLinksHandler(c *gin.Context) {
@@ -148,10 +154,36 @@ func sortAndExtractKeys(m map[string]int) []string {
 
 func HandleGetLinks() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		targetURL := r.URL.Query().Get("url")
+		if targetURL == "" {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
+
+		// Ensure the URL has a scheme
+		if !strings.HasPrefix(targetURL, "http://") && !strings.HasPrefix(targetURL, "https://") {
+			targetURL = "http://" + targetURL
+		}
+
+		internalLinks, externalLinks, err := getLinks(targetURL)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		if len(internalLinks) == 0 && len(externalLinks) == 0 {
+			JSONError(w, ErrorResponse{
+				Skipped: "No internal or external links found. " +
+					"This may be due to the website being dynamically rendered, using a client-side framework (like React), and without SSR enabled. " +
+					"That would mean that the static HTML returned from the HTTP request doesn't contain any meaningful content for Web-Check to analyze. " +
+					"You can rectify this by using a headless browser to render the page instead.",
+			}, http.StatusBadRequest)
+			return
+		}
+
+		JSON(w, LinkResponse{
+			Internal: internalLinks,
+			External: externalLinks,
+		}, http.StatusOK)
 	})
 }

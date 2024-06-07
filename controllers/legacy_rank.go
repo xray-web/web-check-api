@@ -173,5 +173,13 @@ func HandleLegacyRank() http.Handler {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
+
+		result, err := checkLegacyRank(url)
+		if err != nil {
+			JSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		JSON(w, result, http.StatusOK)
 	})
 }

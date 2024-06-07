@@ -35,3 +35,20 @@ func TestGetLinksHandler(t *testing.T) {
 	assert.NotNil(t, response.Internal)
 	assert.NotNil(t, response.External)
 }
+
+func TestHandleGetLinks(t *testing.T) {
+	t.Parallel()
+	req := httptest.NewRequest("GET", "/get-links?url=www.google.com", nil)
+	rec := httptest.NewRecorder()
+	controllers.HandleGetLinks().ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response controllers.LinkResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Internal)
+	assert.NotNil(t, response.External)
+}

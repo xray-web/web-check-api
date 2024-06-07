@@ -37,3 +37,22 @@ func TestLegacyRankHandler(t *testing.T) {
 
 	assert.True(t, response.IsFound || !response.IsFound)
 }
+
+func TestHandleLegacyRank(t *testing.T) {
+	t.Parallel()
+	req := httptest.NewRequest("GET", "/legacy-rank?url=www.google.com", nil)
+	rec := httptest.NewRecorder()
+	controllers.HandleLegacyRank().ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response controllers.RankResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, response)
+
+	assert.Equal(t, "www.google.com", response.Domain)
+
+	assert.True(t, response.IsFound || !response.IsFound)
+}

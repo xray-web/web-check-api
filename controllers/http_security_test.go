@@ -40,3 +40,24 @@ func TestHttpSecurityHandler(t *testing.T) {
 	assert.False(t, response.ContentSecurityPolicy)
 
 }
+
+func TestHandleHttpSecurity(t *testing.T) {
+	t.Parallel()
+	req := httptest.NewRequest("GET", "/check-http-security?url=www.google.com", nil)
+	rec := httptest.NewRecorder()
+	controllers.HandleHttpSecurity().ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response controllers.HTTPSecurityResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &response)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, response)
+
+	assert.False(t, response.StrictTransportPolicy)
+	assert.True(t, response.XFrameOptions)
+	assert.False(t, response.XContentTypeOptions)
+	assert.True(t, response.XXSSProtection)
+	assert.False(t, response.ContentSecurityPolicy)
+}
