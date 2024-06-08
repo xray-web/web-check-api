@@ -44,6 +44,18 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags())
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS())
 	s.mux.Handle("GET /api/trace-route", handlers.HandleTraceRoute())
+	s.mux.Handle("/api/mail-config", handlers.HandleMailConfig())
+	s.mux.Handle("/api/robots-txt", handlers.HandleRobotsTxt())
+	s.mux.Handle("/api/security-txt", handlers.HandleSecurityTxt())
+	s.mux.Handle("/api/sitemap", handlers.HandleSitemap())
+	s.mux.Handle("/api/ssl", handlers.HandleSSL())
+	s.mux.Handle("/api/threats", handlers.HandleThreats())
+	s.mux.Handle("/api/txt-records", handlers.HandleTXTRecords())
+	s.mux.Handle("/api/whois", handlers.HandleWhois())
+	s.mux.Handle("/api/archives", handlers.HandleArchives())
+	s.mux.Handle("/api/status", handlers.HandleStatus())
+	s.mux.Handle("/api/screenshot", handlers.HandleScreenshot())
+	s.mux.Handle("/api/tech-stack", handlers.HandleTechStack())
 }
 
 func (s *Server) Run() error {

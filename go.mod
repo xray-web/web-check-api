@@ -19,6 +19,8 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	golang.org/x/mod v0.16.0 // indirect
+	golang.org/x/tools v0.19.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
 
@@ -26,6 +28,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/aeden/traceroute v0.0.0-20210211061815-03f5f7cb7908
 	github.com/jarcoal/httpmock v1.3.1
+	github.com/miekg/dns v1.1.59
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/net v0.25.0
 	golang.org/x/sys v0.20.0 // indirect
