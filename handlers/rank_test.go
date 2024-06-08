@@ -12,7 +12,7 @@ import (
 )
 
 func TestHandleGetRank(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	tests := []struct {
 		name           string
 		urlParam       string
