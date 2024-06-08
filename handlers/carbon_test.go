@@ -12,7 +12,7 @@ import (
 )
 
 func TestHandleCarbon(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
