@@ -56,6 +56,7 @@ func (s *Server) routes() {
 	s.mux.Handle("/api/status", handlers.HandleStatus())
 	s.mux.Handle("/api/screenshot", handlers.HandleScreenshot())
 	s.mux.Handle("/api/tech-stack", handlers.HandleTechStack())
+	s.mux.Handle("GET /health", handlers.HandleHealthCheck())
 }
 
 func (s *Server) Run() error {
