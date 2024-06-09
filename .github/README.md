@@ -1,5 +1,12 @@
-
-# Web Check API
+<h1 align="center">Web Check API</h1>
+<p align="center">
+  <a href="https://github.com/lissy93/web-check">
+    <img width="72" src="./web-check.png?raw=true" />
+    <br />
+  </a>
+  <i>A light-weight Go API for discovering website data</i><br />
+  <b><a href="https://web-check.xyz">Web Check</a> - <i>Gives you Xray Vision for any Website</i></b>
+</p>
 
 > [!NOTE]
 > This is a very early work in progress, and is not yet feature complete or production ready.
@@ -16,7 +23,7 @@
 You will need [git](https://git-scm.com/) and [go](https://go.dev/) installed.
 Then clone the repo and download dependencies.
 
-```bash
+```
 git clone git@github.com:xray-web/web-check-api.git
 cd web-check-api
 go mod download
@@ -24,13 +31,13 @@ go mod download
 
 #### Start Server
 
-```bash
+```
 make run
 ```
 
 #### Run Tests
 
-```bash
+```
 make test
 ```
 
@@ -42,7 +49,7 @@ make test
 Follow the setup instructions above. Then build the binaries.
 Then execute the output executable directly (e.g. `./bin/app`)
 
-```bash
+```
 make build
 ```
 
