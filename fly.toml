@@ -18,3 +18,19 @@ primary_region = 'lhr'
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
+
+[[services.tcp_checks]]
+  grace_period = "1s"
+  interval = "15s"
+  restart_limit = 0
+  timeout = "2s"
+
+[[services.http_checks]]
+  interval = 10000
+  grace_period = "5s"
+  method = "get"
+  path = "/health"
+  protocol = "http"
+  timeout = 2000
+  tls_skip_verify = false
+  [services.http_checks.headers]
