@@ -1,10 +1,10 @@
-
 name: 🚀 Deploy to Fly
 on:
   workflow_dispatch:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     name: Deploy app
@@ -13,9 +13,43 @@ jobs:
     steps:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
+
       - name: Setup Fly 🧰
         uses: superfly/flyctl-actions/setup-flyctl@master
+
       - name: Deploy to Fly.io 🛩️
+        id: deploy
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_TOKEN }}
+
+      - name: Create GitHub Deployment Status 🚢
+        id: create_deployment
+        uses: peter-evans/create-or-update-deployment@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          environment_url: https://api.web-check.xyz
+          description: "Deploying the application to Fly.io"
+          transient_environment: false
+          auto_inactive: true
+
+      - name: Update GitHub Deployment Status to Success ✅
+        if: success()
+        uses: octokit/request-action@v2
+        with:
+          route: POST /repos/${{ github.repository }}/deployments/${{ steps.create_deployment.outputs.deployment_id }}/statuses
+          token: ${{ secrets.GITHUB_TOKEN }}
+          state: success
+          environment_url: https://api.web-check.xyz
+          description: '✅ Deployment successful! 🥳'
+
+      - name: Update GitHub Deployment Status to Failure 🚫
+        if: failure()
+        uses: octokit/request-action@v2
+        with:
+          route: POST /repos/${{ github.repository }}/deployments/${{ steps.create_deployment.outputs.deployment_id }}/statuses
+          token: ${{ secrets.GITHUB_TOKEN }}
+          state: failure
+          environment_url: https://api.web-check.xyz
+          description: '🚫 Deployment failed 😥'
