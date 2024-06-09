@@ -25,6 +25,8 @@ jobs:
           ref: ${{ github.sha }}
           description: "Deploying to Fly.io"
           auto_merge: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Fly.io 🛩️
         run: flyctl deploy --remote-only
@@ -39,6 +41,8 @@ jobs:
           state: success
           description: "✅ Deployment Succeeded 🥳"
           environment: production
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Set deployment status to failure ❌
         if: failure()
@@ -48,3 +52,5 @@ jobs:
           state: failure
           description: "❌ Deployment Failed 😥"
           environment: production
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
