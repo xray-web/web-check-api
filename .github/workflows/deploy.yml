@@ -36,7 +36,7 @@ jobs:
 
       - name: Update GitHub Deployment Status to Success ✅
         if: success()
-        uses: octokit/request-action@v2
+        uses: octokit/request-action@v2.3.1
         with:
           route: POST /repos/${{ github.repository }}/deployments/${{ steps.create_deployment.outputs.deployment_id }}/statuses
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -46,7 +46,7 @@ jobs:
 
       - name: Update GitHub Deployment Status to Failure 🚫
         if: failure()
-        uses: octokit/request-action@v2
+        uses: octokit/request-action@v2.3.1
         with:
           route: POST /repos/${{ github.repository }}/deployments/${{ steps.create_deployment.outputs.deployment_id }}/statuses
           token: ${{ secrets.GITHUB_TOKEN }}
