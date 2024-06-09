@@ -17,39 +17,51 @@ jobs:
       - name: Setup Fly 🧰
         uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Install GitHub CLI 🐙
+        uses: actions/setup-gh@v3
+
+      - name: Create GitHub Deployment 🚢
+        id: create_deployment
+        run: |
+          gh auth setup-git
+          gh auth status
+          gh api repos/${{ github.repository }}/deployments \
+            -X POST \
+            -F ref=${{ github.ref }} \
+            -F environment=production \
+            -F description="Deploying the application to Fly.io" \
+            -F required_contexts=[] \
+            -F auto_merge=false \
+            -q '.id' > deployment-id.txt
+          DEPLOYMENT_ID=$(cat deployment-id.txt)
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy to Fly.io 🛩️
         id: deploy
         run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_TOKEN }}
 
-      - name: Create GitHub Deployment Status 🚢
-        id: create_deployment
-        uses: peter-evans/create-or-update-deployment@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          environment: production
-          environment_url: https://api.web-check.xyz
-          description: "Deploying the application to Fly.io"
-          transient_environment: false
-          auto_inactive: true
-
       - name: Update GitHub Deployment Status to Success ✅
-        if: success()
-        uses: octokit/request-action@v2.3.1
-        with:
-          route: POST /repos/${{ github.repository }}/deployments/${{ steps.create_deployment.outputs.deployment_id }}/statuses
-          token: ${{ secrets.GITHUB_TOKEN }}
-          state: success
-          environment_url: https://api.web-check.xyz
-          description: '✅ Deployment successful! 🥳'
+        if: ${{ success() }}
+        run: |
+          gh api repos/${{ github.repository }}/deployments/${{ env.deployment_id }}/statuses \
+            -X POST \
+            -F state=success \
+            -F environment_url=https://api.web-check.xyz \
+            -F description='✅ Deployment successful! 🥳'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update GitHub Deployment Status to Failure 🚫
-        if: failure()
-        uses: octokit/request-action@v2.3.1
-        with:
-          route: POST /repos/${{ github.repository }}/deployments/${{ steps.create_deployment.outputs.deployment_id }}/statuses
-          token: ${{ secrets.GITHUB_TOKEN }}
-          state: failure
-          environment_url: https://api.web-check.xyz
-          description: '🚫 Deployment failed 😥'
+        if: ${{ failure() }}
+        run: |
+          gh api repos/${{ github.repository }}/deployments/${{ env.deployment_id }}/statuses \
+            -X POST \
+            -F state=failure \
+            -F environment_url=https://api.web-check.xyz \
+            -F description='🚫 Deployment failed 😥'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
