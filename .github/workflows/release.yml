@@ -60,7 +60,7 @@ jobs:
             goos: darwin
           - goarch: arm64
             goos: windows
-    steps:
+      steps:
       - name: Checkout code 🛎️
         uses: actions/checkout@v3
 
