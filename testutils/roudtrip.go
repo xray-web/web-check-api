@@ -15,18 +15,20 @@ func (fn RoundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 
 func Response(status int, body []byte) *http.Response {
 	return &http.Response{
-		Status:     http.StatusText(status),
-		StatusCode: status,
-		Body:       io.NopCloser(bytes.NewReader(body)),
+		Status:        http.StatusText(status),
+		StatusCode:    status,
+		Body:          io.NopCloser(bytes.NewReader(body)),
+		ContentLength: int64(len(body)),
 	}
 }
 
 func ResponseJSON(status int, body any) *http.Response {
 	b, _ := json.Marshal(body)
 	return &http.Response{
-		Status:     http.StatusText(status),
-		StatusCode: status,
-		Body:       io.NopCloser(bytes.NewReader(b)),
+		Status:        http.StatusText(status),
+		StatusCode:    status,
+		Body:          io.NopCloser(bytes.NewReader(b)),
+		ContentLength: int64(len(b)),
 	}
 }
 

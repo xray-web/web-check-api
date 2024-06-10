@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xray-web/web-check-api/checks"
-	"github.com/xray-web/web-check-api/handlers/testutils"
+	"github.com/xray-web/web-check-api/testutils"
 )
 
 func TestHandleGetRank(t *testing.T) {

@@ -47,12 +47,14 @@ func (c *Carbon) HtmlSize(ctx context.Context, url string) (int, error) {
 		return 0, fmt.Errorf("failed to get HTML size: %w", err)
 	}
 	defer resp.Body.Close()
-
+	// short cut to avoid reading body into RAM
+	if resp.ContentLength != -1 {
+		return int(resp.ContentLength), nil
+	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read response body: %w", err)
 	}
-
 	return len(body), nil
 }
 
