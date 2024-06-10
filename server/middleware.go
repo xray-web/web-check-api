@@ -38,3 +38,14 @@ func NotFound(h http.Handler) http.Handler {
 		h.ServeHTTP(w, r)
 	})
 }
+
+// HealthCheck returns the status of the application
+func HealthCheck() http.Handler {
+	type Response struct {
+		Status string `json:"status"`
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Response{Status: "ok"})
+	})
+}
