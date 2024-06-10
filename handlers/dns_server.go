@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -60,28 +59,24 @@ func resolveDNSServer(ctx context.Context, domain string) ([]Result, error) {
 
 func HandleDNSServer() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		// Extract the domain from the URL
-		domain := strings.ReplaceAll(url, "http://", "")
-		domain = strings.ReplaceAll(domain, "https://", "")
-		domain = strings.TrimSuffix(domain, "/")
-
 		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 		defer cancel()
 
-		results, err := resolveDNSServer(ctx, domain)
+		hostname := rawURL.Hostname()
+		results, err := resolveDNSServer(ctx, hostname)
 		if err != nil {
 			JSONError(w, fmt.Errorf("error resolving DNS: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		response := Response{
-			Domain: domain,
+			Domain: hostname,
 			DNS:    results,
 		}
 

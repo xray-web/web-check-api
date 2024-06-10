@@ -6,18 +6,13 @@ import (
 
 func HandleGetHeaders() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		// Ensure the URL has a scheme
-		if !(len(url) >= 7 && (url[:7] == "http://" || url[:8] == "https://")) {
-			url = "http://" + url
-		}
-
-		resp, err := http.Get(url)
+		resp, err := http.Get(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

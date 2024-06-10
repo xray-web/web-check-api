@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -34,17 +33,13 @@ func getAuth() map[string]string {
 
 func HandleGetRank() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-			url = "http://" + url // Assuming HTTP by default
-		}
-
-		domain, err := getDomain(url)
+		domain, err := getDomain(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusBadRequest)
 			return

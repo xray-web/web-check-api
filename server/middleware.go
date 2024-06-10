@@ -1,6 +1,9 @@
 package server
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 func CORS(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -16,6 +19,21 @@ func CORS(h http.Handler) http.Handler {
 
 		if r.Method == http.MethodOptions {
 			w.Write([]byte{})
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
+func NotFound(h http.Handler) http.Handler {
+	type Response struct {
+		Status string `json:"status"`
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if h == nil || r.URL.Path != "/" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(Response{Status: "route not found"})
 			return
 		}
 		h.ServeHTTP(w, r)

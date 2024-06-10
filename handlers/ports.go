@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 )
@@ -87,16 +86,13 @@ func containsInt(slice []int, item int) bool {
 
 func HandleGetPorts() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		domain := strings.TrimPrefix(url, "http://")
-		domain = strings.TrimPrefix(domain, "https://")
-
-		openPorts, failedPorts := checkPorts(domain)
+		openPorts, failedPorts := checkPorts(rawURL.Hostname())
 
 		JSON(w, KV{
 			"openPorts":   openPorts,

@@ -28,18 +28,3 @@ func JSON(w http.ResponseWriter, v any, code int) {
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(v)
 }
-
-func NotFound(h http.Handler) http.Handler {
-	type Response struct {
-		Status string `json:"status"`
-	}
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if h == nil || r.URL.Path != "/" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(Response{Status: "route not found"})
-			return
-		}
-		h.ServeHTTP(w, r)
-	})
-}

@@ -14,10 +14,6 @@ type HSTSResponse struct {
 }
 
 func checkHSTS(url string) (HSTSResponse, error) {
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = "http://" + url // Assuming HTTP by default
-	}
-
 	client := &http.Client{}
 
 	req, err := http.NewRequest("HEAD", url, nil)
@@ -54,13 +50,13 @@ func checkHSTS(url string) (HSTSResponse, error) {
 
 func HandleHsts() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		result, err := checkHSTS(url)
+		result, err := checkHSTS(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

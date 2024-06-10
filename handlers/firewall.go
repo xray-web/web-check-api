@@ -35,14 +35,8 @@ type wafResponse struct {
 }
 
 func checkWAF(url string) (wafResponse, error) {
-	fullURL := ""
-	if !strings.HasPrefix(url, "http") {
-		fullURL = "http://" + url
-	} else {
-		fullURL = url
-	}
-
-	resp, err := http.Get(fullURL)
+	// TODO(Lissy93): does this test require we set scheme to http?
+	resp, err := http.Get(url)
 	if err != nil {
 		return wafResponse{}, fmt.Errorf("error fetching URL: %s", err.Error())
 	}
@@ -108,13 +102,13 @@ func checkWAF(url string) (wafResponse, error) {
 
 func HandleFirewall() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		domain := r.URL.Query().Get("url")
-		if domain == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		result, err := checkWAF(domain)
+		result, err := checkWAF(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

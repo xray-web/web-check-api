@@ -3,7 +3,6 @@ package handlers
 import (
 	"net"
 	"net/http"
-	"strings"
 )
 
 func lookupAsync(address string) (map[string]interface{}, error) {
@@ -26,14 +25,13 @@ func lookupAsync(address string) (map[string]interface{}, error) {
 
 func HandleGetIP() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		address := strings.ReplaceAll(strings.ReplaceAll(url, "https://", ""), "http://", "")
-		result, err := lookupAsync(address)
+		result, err := lookupAsync(rawURL.Hostname())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
