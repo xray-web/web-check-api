@@ -25,7 +25,6 @@ require (
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/aeden/traceroute v0.0.0-20210211061815-03f5f7cb7908
-	github.com/jarcoal/httpmock v1.3.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/net v0.25.0
 	golang.org/x/sys v0.20.0 // indirect
