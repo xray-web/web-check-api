@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -64,18 +63,14 @@ func isEmpty(tags *SocialTags) bool {
 
 func HandleGetSocialTags() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-			url = "http://" + url
-		}
-
 		// Fetch HTML content from the URL
-		resp, err := http.Get(url)
+		resp, err := http.Get(rawURL.String())
 		if err != nil {
 			return
 		}

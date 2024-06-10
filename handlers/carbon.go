@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -32,9 +31,6 @@ type CarbonData struct {
 
 // Function to get the HTML size of the website
 func getHtmlSize(ctx context.Context, url string) (int, error) {
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		url = "http://" + url
-	}
 	client := &http.Client{
 		Timeout: time.Second * 5,
 	}
@@ -94,12 +90,13 @@ func getCarbonData(ctx context.Context, sizeInBytes int) (*CarbonData, error) {
 
 func HandleCarbon() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
+		url := rawURL.String()
 		sizeInBytes, err := getHtmlSize(r.Context(), url)
 		if err != nil {
 			JSONError(w, fmt.Errorf("error getting HTML size: %v", err), http.StatusInternalServerError)

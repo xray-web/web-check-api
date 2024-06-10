@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 )
 
@@ -52,24 +51,13 @@ func getScanResults(scanID int) (map[string]interface{}, error) {
 
 func HandleTLS() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rawUrl := r.URL.Query().Get("url")
-		if rawUrl == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(rawUrl, "http://") && !strings.HasPrefix(rawUrl, "https://") {
-			rawUrl = "http://" + rawUrl
-		}
-
-		parsedUrl, err := url.Parse(rawUrl)
-		if err != nil {
-			JSONError(w, ErrInvalidURL, http.StatusBadRequest)
-			return
-		}
-
-		domain := parsedUrl.Hostname()
-		scanResponse, err := initiateScan(domain)
+		scanResponse, err := initiateScan(rawURL.Hostname())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

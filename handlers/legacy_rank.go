@@ -148,13 +148,13 @@ func unzip(src, dest string) error {
 
 func HandleLegacyRank() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		result, err := checkLegacyRank(url)
+		result, err := checkLegacyRank(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

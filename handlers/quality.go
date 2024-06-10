@@ -7,36 +7,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 )
-
-func formatURL(input string) (string, error) {
-	// Add http scheme if missing
-	if !strings.HasPrefix(input, "http://") && !strings.HasPrefix(input, "https://") {
-		input = "http://" + input
-	}
-
-	// Parse the URL to ensure it's valid
-	parsedURL, err := url.Parse(input)
-	if err != nil {
-		return "", fmt.Errorf("invalid URL: %v", err)
-	}
-
-	// Rebuild the URL to ensure it matches the required format
-	return parsedURL.String(), nil
-}
 
 func HandleGetQuality() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
-			return
-		}
-
-		formattedURL, err := formatURL(urlParam)
+		rawURL, err := extractURL(r)
 		if err != nil {
-			JSONError(w, err, http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
@@ -46,7 +23,7 @@ func HandleGetQuality() http.Handler {
 			return
 		}
 
-		encodedURL := url.QueryEscape(formattedURL)
+		encodedURL := url.QueryEscape(rawURL.String())
 		endpoint := fmt.Sprintf("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=%s&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO&category=PWA&strategy=mobile&key=%s", encodedURL, apiKey)
 
 		resp, err := http.Get(endpoint)

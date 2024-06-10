@@ -22,7 +22,7 @@ func New(conf config.Config) *Server {
 }
 
 func (s *Server) routes() {
-	s.mux.Handle("/", handlers.NotFound(nil))
+	s.mux.Handle("/", NotFound(nil))
 
 	s.mux.Handle("GET /api/headers", handlers.HandleGetHeaders())
 	s.mux.Handle("GET /api/cookies", handlers.HandleCookies())
