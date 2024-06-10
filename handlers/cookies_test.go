@@ -13,7 +13,7 @@ func TestHandlerCookies(t *testing.T) {
 
 	t.Run("missing URL parameter", func(t *testing.T) {
 		t.Parallel()
-		req := httptest.NewRequest(http.MethodGet, "/blocklists", nil)
+		req := httptest.NewRequest(http.MethodGet, "/cookies", nil)
 		rec := httptest.NewRecorder()
 
 		HandleCookies().ServeHTTP(rec, req)

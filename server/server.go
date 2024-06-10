@@ -5,19 +5,22 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/xray-web/web-check-api/checks"
 	"github.com/xray-web/web-check-api/config"
 	"github.com/xray-web/web-check-api/handlers"
 )
 
 type Server struct {
-	conf config.Config
-	mux  *http.ServeMux
+	conf   config.Config
+	mux    *http.ServeMux
+	checks *checks.Checks
 }
 
 func New(conf config.Config) *Server {
 	return &Server{
-		conf: conf,
-		mux:  http.NewServeMux(),
+		conf:   conf,
+		mux:    http.NewServeMux(),
+		checks: checks.NewChecks(),
 	}
 }
 
@@ -27,7 +30,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /health", HealthCheck())
 
 	s.mux.Handle("GET /api/block-lists", handlers.HandleBlockLists())
-	s.mux.Handle("GET /api/carbon", handlers.HandleCarbon())
+	s.mux.Handle("GET /api/carbon", handlers.HandleCarbon(s.checks.Carbon))
 	s.mux.Handle("GET /api/cookies", handlers.HandleCookies())
 	s.mux.Handle("GET /api/dns-server", handlers.HandleDNSServer())
 	s.mux.Handle("GET /api/dns", handlers.HandleDNS())
@@ -41,7 +44,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/linked-pages", handlers.HandleGetLinks())
 	s.mux.Handle("GET /api/ports", handlers.HandleGetPorts())
 	s.mux.Handle("GET /api/quality", handlers.HandleGetQuality())
-	s.mux.Handle("GET /api/rank", handlers.HandleGetRank())
+	s.mux.Handle("GET /api/rank", handlers.HandleGetRank(s.checks.Rank))
 	s.mux.Handle("GET /api/redirects", handlers.HandleGetRedirects())
 	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags())
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS())
