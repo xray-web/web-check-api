@@ -24,15 +24,17 @@ func New(conf config.Config) *Server {
 func (s *Server) routes() {
 	s.mux.Handle("/", NotFound(nil))
 
-	s.mux.Handle("GET /api/headers", handlers.HandleGetHeaders())
-	s.mux.Handle("GET /api/cookies", handlers.HandleCookies())
-	s.mux.Handle("GET /api/carbon", handlers.HandleCarbon())
+	s.mux.Handle("GET /health", HealthCheck())
+
 	s.mux.Handle("GET /api/block-lists", handlers.HandleBlockLists())
+	s.mux.Handle("GET /api/carbon", handlers.HandleCarbon())
+	s.mux.Handle("GET /api/cookies", handlers.HandleCookies())
 	s.mux.Handle("GET /api/dns-server", handlers.HandleDNSServer())
 	s.mux.Handle("GET /api/dns", handlers.HandleDNS())
 	s.mux.Handle("GET /api/dnssec", handlers.HandleDnsSec())
 	s.mux.Handle("GET /api/firewall", handlers.HandleFirewall())
 	s.mux.Handle("GET /api/get-ip", handlers.HandleGetIP())
+	s.mux.Handle("GET /api/headers", handlers.HandleGetHeaders())
 	s.mux.Handle("GET /api/hsts", handlers.HandleHsts())
 	s.mux.Handle("GET /api/http-security", handlers.HandleHttpSecurity())
 	s.mux.Handle("GET /api/legacy-rank", handlers.HandleLegacyRank())
@@ -44,7 +46,6 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags())
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS())
 	s.mux.Handle("GET /api/trace-route", handlers.HandleTraceRoute())
-	s.mux.Handle("GET /health", handlers.HandleHealthCheck())
 }
 
 func (s *Server) Run() error {
