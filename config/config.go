@@ -4,24 +4,21 @@ import (
 	"cmp"
 	"fmt"
 	"os"
-	"strings"
 )
 
 type Config struct {
-	Host           string
-	Port           string
-	AllowedOrigins []string
+	Host          string
+	Port          string
+	AllowedOrigin string
 }
 
 func New() Config {
 	host := getEnvDefault("HOST", "0.0.0.0")
 	port := getEnvDefault("PORT", "8080")
 	return Config{
-		Host: host,
-		Port: port,
-		AllowedOrigins: strings.Split(
-			getEnvDefault("ALLOWED_ORIGINS", fmt.Sprintf("http://%s:%s,https://%s:%s", host, port, host, port)), ",",
-		),
+		Host:          host,
+		Port:          port,
+		AllowedOrigin: getEnvDefault("ALLOWED_ORIGINS", fmt.Sprintf("http://%s:%s", host, port)),
 	}
 }
 

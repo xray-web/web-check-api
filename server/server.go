@@ -52,5 +52,5 @@ func (s *Server) Run() error {
 
 	addr := fmt.Sprintf("%s:%s", s.conf.Host, s.conf.Port)
 	log.Printf("Server started, listening on: %v\n", addr)
-	return http.ListenAndServe(addr, CORS(s.mux))
+	return http.ListenAndServe(addr, s.CORS(s.mux))
 }
