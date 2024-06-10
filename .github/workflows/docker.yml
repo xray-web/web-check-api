@@ -1,4 +1,4 @@
-name: 🐳 Build + Publish Multi-Platform Image
+name: 🐳 Publish Docker
 
 on:
   workflow_dispatch:
