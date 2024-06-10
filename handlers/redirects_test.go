@@ -50,6 +50,7 @@ func TestHandleGetRedirects(t *testing.T) {
 			var response map[string]interface{}
 			err := json.Unmarshal(rec.Body.Bytes(), &response)
 			assert.NoError(t, err)
+			// TODO: break this out of table drive tests, should not use name as part of logic
 			if tc.name == "Invalid URL" {
 				assert.Contains(t, response["error"], tc.expectedBody["error"])
 			} else {
