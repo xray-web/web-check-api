@@ -11,51 +11,46 @@ import (
 
 func TestHandleGetRedirects(t *testing.T) {
 	t.Parallel()
-	tests := []struct {
-		name           string
-		urlParam       string
-		expectedStatus int
-		expectedBody   map[string]interface{}
-	}{
-		{
-			name:           "Missing URL parameter",
-			urlParam:       "",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody:   KV{"error": "missing URL parameter"},
-		},
-		{
-			name:           "Invalid URL",
-			urlParam:       "invalid-url",
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   KV{"error": "error: Get \"http://invalid-url\""},
-		},
-		{
-			name:           "Valid URL with no redirects",
-			urlParam:       "example.com",
-			expectedStatus: http.StatusOK,
-			expectedBody:   KV{"redirects": []interface{}{"http://example.com"}},
-		},
-	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			req := httptest.NewRequest("GET", "/redirects?url="+tc.urlParam, nil)
-			rec := httptest.NewRecorder()
-			HandleGetRedirects().ServeHTTP(rec, req)
+	t.Run("Missing URL parameter", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest("GET", "/redirects?url=", nil)
+		rec := httptest.NewRecorder()
 
-			assert.Equal(t, tc.expectedStatus, rec.Code)
+		HandleGetRedirects().ServeHTTP(rec, req)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(rec.Body.Bytes(), &response)
-			assert.NoError(t, err)
-			// TODO: break this out of table drive tests, should not use name as part of logic
-			if tc.name == "Invalid URL" {
-				assert.Contains(t, response["error"], tc.expectedBody["error"])
-			} else {
-				assert.Equal(t, tc.expectedBody, response)
-			}
-		})
-	}
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		var response KV
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, KV{"error": "missing URL parameter"}, response)
+	})
+
+	t.Run("Invalid URL", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest("GET", "/redirects?url=invalid-url", nil)
+		rec := httptest.NewRecorder()
+
+		HandleGetRedirects().ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		var response KV
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Contains(t, response["error"], KV{"error": "error: Get \"http://invalid-url\""}["error"])
+	})
+
+	t.Run("Valid URL with no redirects", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest("GET", "/redirects?url=example.com", nil)
+		rec := httptest.NewRecorder()
+
+		HandleGetRedirects().ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		var response KV
+		err := json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, KV{"redirects": []interface{}{"http://example.com"}}, response)
+	})
 }
