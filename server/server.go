@@ -44,6 +44,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags())
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS())
 	s.mux.Handle("GET /api/trace-route", handlers.HandleTraceRoute())
+	s.mux.Handle("GET /health", handlers.HandleHealthCheck())
 }
 
 func (s *Server) Run() error {

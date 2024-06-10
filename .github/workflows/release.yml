@@ -1,0 +1,32 @@
+name: 🛠️ Compile Release Assets
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  releases-matrix:
+    name: Release Go Binary
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: ['386', amd64, arm64]
+        exclude:
+          - goarch: '386'
+            goos: darwin
+          - goarch: arm64
+            goos: windows
+    steps:
+    - name: Checkout code 🛎️
+      uses: actions/checkout@v3
+    - name: Compile Go binaries 🏗️
+      uses: wangyoucao577/go-release-action@v1.29
+      with:
+        github_token: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        goversion: 1.22.4
+        project_path: '.'
+        binary_name: web-check-api
+        md5sum: true
