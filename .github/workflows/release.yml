@@ -60,35 +60,34 @@ jobs:
             goos: darwin
           - goarch: arm64
             goos: windows
-      steps:
-      - name: Checkout code 🛎️
-        uses: actions/checkout@v3
+    steps:
+    - name: Checkout code 🛎️
+      uses: actions/checkout@v3
 
-      - name: Set up Go 🏗️
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.22.4
+    - name: Set up Go 🏗️
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.22.4
 
-      - name: Compile Go binaries 🔨
-        run: |
-          go build -ldflags "-X main.Version=${{ needs.create-draft-release.outputs.tag_name }}" -o web-check-api .
+    - name: Compile Go binaries 🔨
+      run: |
+        go build -ldflags "-X main.Version=${{ needs.create-draft-release.outputs.tag_name }}" -o web-check-api .
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
         GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+    - name: Upload Go binaries ⤴️
+      uses: actions/upload-artifact@v2
+      with:
+        name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: web-check-api
 
-      - name: Upload Go binaries ⤴️
-        uses: actions/upload-artifact@v2
-        with:
-          name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: web-check-api
-
-      - name: Attach binaries to release 📎
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ needs.create-draft-release.outputs.release_id }}
-          asset_path: web-check-api
-          asset_name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+    - name: Attach binaries to release 📎
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ needs.create-draft-release.outputs.release_id }}
+        asset_path: web-check-api
+        asset_name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
+        asset_content_type: application/octet-stream
+      env:
+        GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
