@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to draft a release for (must already exist)'
+        description: "Tag to draft a release for (must already exist)"
         required: true
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -54,40 +54,40 @@ jobs:
     strategy:
       matrix:
         goos: [linux, windows, darwin]
-        goarch: ['386', amd64, arm64]
+        goarch: ["386", amd64, arm64]
         exclude:
-          - goarch: '386'
+          - goarch: "386"
             goos: darwin
           - goarch: arm64
             goos: windows
     steps:
-    - name: Checkout code 🛎️
-      uses: actions/checkout@v3
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
 
-    - name: Set up Go 🏗️
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.22.4
+      - name: Set up Go 🏗️
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
 
-    - name: Compile Go binaries 🔨
-      run: |
-        go build -ldflags "-X main.Version=${{ needs.create-draft-release.outputs.tag_name }}" -o web-check-api .
-      env:
-        GOOS: ${{ matrix.goos }}
-        GOARCH: ${{ matrix.goarch }}
-        GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
-    - name: Upload Go binaries ⤴️
-      uses: actions/upload-artifact@v2
-      with:
-        name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
-        path: web-check-api
+      - name: Compile Go binaries 🔨
+        run: |
+          go build -ldflags "-X main.Version=${{ needs.create-draft-release.outputs.tag_name }}" -o web-check-api .
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Upload Go binaries ⤴️
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: web-check-api
 
-    - name: Attach binaries to release 📎
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ needs.create-draft-release.outputs.release_id }}
-        asset_path: web-check-api
-        asset_name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
-        asset_content_type: application/octet-stream
-      env:
-        GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Attach binaries to release 📎
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ needs.create-draft-release.outputs.release_id }}
+          asset_path: web-check-api
+          asset_name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
