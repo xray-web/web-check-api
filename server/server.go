@@ -46,7 +46,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/quality", handlers.HandleGetQuality())
 	s.mux.Handle("GET /api/rank", handlers.HandleGetRank(s.checks.Rank))
 	s.mux.Handle("GET /api/redirects", handlers.HandleGetRedirects())
-	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags())
+	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags(s.checks.SocialTags))
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS())
 	s.mux.Handle("GET /api/trace-route", handlers.HandleTraceRoute())
 }

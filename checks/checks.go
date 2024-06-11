@@ -6,8 +6,9 @@ import (
 )
 
 type Checks struct {
-	Carbon *Carbon
-	Rank   *Rank
+	Carbon     *Carbon
+	Rank       *Rank
+	SocialTags *SocialTags
 }
 
 func NewChecks() *Checks {
@@ -15,7 +16,8 @@ func NewChecks() *Checks {
 		Timeout: 5 * time.Second,
 	}
 	return &Checks{
-		Carbon: NewCarbon(client),
-		Rank:   NewRank(client),
+		Carbon:     NewCarbon(client),
+		Rank:       NewRank(client),
+		SocialTags: NewSocialTags(client),
 	}
 }
