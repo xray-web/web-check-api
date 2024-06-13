@@ -5,39 +5,16 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
-	"strings"
 	"time"
 )
 
 const archiveAPIURL = "https://web.archive.org/cdx/search/cdx"
 
 func convertTimestampToDate(timestamp string) (time.Time, error) {
-	year, err := strconv.Atoi(timestamp[0:4])
-	if err != nil {
-		return time.Time{}, err
-	}
-	month, err := strconv.Atoi(timestamp[4:6])
-	if err != nil {
-		return time.Time{}, err
-	}
-	day, err := strconv.Atoi(timestamp[6:8])
-	if err != nil {
-		return time.Time{}, err
-	}
-	hour, err := strconv.Atoi(timestamp[8:10])
-	if err != nil {
-		return time.Time{}, err
-	}
-	minute, err := strconv.Atoi(timestamp[10:12])
-	if err != nil {
-		return time.Time{}, err
-	}
-	second, err := strconv.Atoi(timestamp[12:14])
-	if err != nil {
-		return time.Time{}, err
-	}
-	return time.Date(year, time.Month(month), day, hour, minute, second, 0, time.UTC), nil
+	mask := "20060102150405"
+	return time.Parse(mask, timestamp)
 }
 
 func countPageChanges(results [][]string) int {
@@ -64,9 +41,9 @@ func getAveragePageSize(scans [][]string) int {
 	return totalSize / len(scans)
 }
 
-func getScanFrequency(firstScan, lastScan time.Time, totalScans, changeCount int) map[string]float64 {
-	formatToTwoDecimal := func(num float64) float64 {
-		return math.Round(num*100) / 100
+func getScanFrequency(firstScan, lastScan time.Time, totalScans, changeCount int) map[string]string {
+	formatToTwoDecimal := func(num float64) string {
+		return fmt.Sprintf("%.2f", num)
 	}
 
 	dayFactor := lastScan.Sub(firstScan).Hours() / 24
@@ -75,21 +52,20 @@ func getScanFrequency(firstScan, lastScan time.Time, totalScans, changeCount int
 	scansPerDay := formatToTwoDecimal(float64(totalScans-1) / dayFactor)
 	changesPerDay := formatToTwoDecimal(float64(changeCount) / dayFactor)
 
-	// Handle NaN values
-	if math.IsNaN(daysBetweenScans) {
-		daysBetweenScans = 0
+	if math.IsNaN(dayFactor / float64(totalScans)) {
+		daysBetweenScans = "0.00"
 	}
-	if math.IsNaN(daysBetweenChanges) {
-		daysBetweenChanges = 0
+	if math.IsNaN(dayFactor / float64(changeCount)) {
+		daysBetweenChanges = "0.00"
 	}
-	if math.IsNaN(scansPerDay) {
-		scansPerDay = 0
+	if math.IsNaN(float64(totalScans-1) / dayFactor) {
+		scansPerDay = "0.00"
 	}
-	if math.IsNaN(changesPerDay) {
-		changesPerDay = 0
+	if math.IsNaN(float64(changeCount) / dayFactor) {
+		changesPerDay = "0.00"
 	}
 
-	return map[string]float64{
+	return map[string]string{
 		"daysBetweenScans":   daysBetweenScans,
 		"daysBetweenChanges": daysBetweenChanges,
 		"scansPerDay":        scansPerDay,
@@ -97,10 +73,14 @@ func getScanFrequency(firstScan, lastScan time.Time, totalScans, changeCount int
 	}
 }
 
-func getWaybackData(url string) (map[string]interface{}, error) {
+func getWaybackData(url *url.URL) (map[string]interface{}, error) {
 	cdxUrl := fmt.Sprintf("%s?url=%s&output=json&fl=timestamp,statuscode,digest,length,offset", archiveAPIURL, url)
 
-	resp, err := http.Get(cdxUrl)
+	client := http.Client{
+		Timeout: 60 * time.Second,
+	}
+
+	resp, err := client.Get(cdxUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +98,18 @@ func getWaybackData(url string) (map[string]interface{}, error) {
 		}, nil
 	}
 
+	if len(data) < 1 {
+		return nil, fmt.Errorf("data slice is empty")
+	}
+
 	// Remove the header row
 	data = data[1:]
 
+	if len(data) < 1 {
+		return nil, fmt.Errorf("data slice became empty after removing the first element")
+	}
+
+	// Access the first element of the remaining data
 	firstScan, err := convertTimestampToDate(data[0][0])
 	if err != nil {
 		return nil, err
@@ -146,17 +135,13 @@ func getWaybackData(url string) (map[string]interface{}, error) {
 
 func HandleArchives() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			http.Error(w, "missing 'url' parameter", http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "http://" + urlParam
-		}
-
-		data, err := getWaybackData(urlParam)
+		data, err := getWaybackData(rawURL)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Error fetching Wayback data: %v", err), http.StatusInternalServerError)
 			return

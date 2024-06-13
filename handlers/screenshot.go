@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/chromedp/chromedp"
 )
@@ -17,14 +16,6 @@ type screenshotResponse struct {
 }
 
 func takeScreenshot(targetURL string) (*screenshotResponse, error) {
-	if targetURL == "" {
-		return nil, errors.New("URL is missing from queryStringParameters")
-	}
-
-	if !strings.HasPrefix(targetURL, "http://") && !strings.HasPrefix(targetURL, "https://") {
-		targetURL = "http://" + targetURL
-	}
-
 	parsedURL, err := url.ParseRequestURI(targetURL)
 	if err != nil {
 		return nil, errors.New("URL provided is invalid")
@@ -51,13 +42,13 @@ func takeScreenshot(targetURL string) (*screenshotResponse, error) {
 
 func HandleScreenshot() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		targetURL := r.URL.Query().Get("url")
-		if targetURL == "" {
-			http.Error(w, "missing 'url' parameter", http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		data, err := takeScreenshot(targetURL)
+		data, err := takeScreenshot(rawURL.String())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

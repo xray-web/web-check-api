@@ -5,29 +5,22 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 func HandleSSL() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("url query parameter is required"), http.StatusBadRequest)
-			return
-		}
-
-		parsedURL, err := url.Parse(urlParam)
+		rawURL, err := extractURL(r)
 		if err != nil {
-			JSONError(w, errors.New("invalid URL format"), http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
 		options := &tls.Config{
-			ServerName:         parsedURL.Hostname(),
+			ServerName:         rawURL.Hostname(),
 			InsecureSkipVerify: true, // Skip certificate validation
 		}
 
-		conn, err := tls.Dial("tcp", parsedURL.Host+":443", options)
+		conn, err := tls.Dial("tcp", rawURL.Host+":443", options)
 		if err != nil {
 			JSONError(w, fmt.Errorf("error establishing TLS connection: %s", err.Error()), http.StatusInternalServerError)
 			return

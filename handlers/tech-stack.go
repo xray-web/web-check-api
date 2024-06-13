@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -36,17 +35,13 @@ func extractTechnologies(url string) ([]string, error) {
 
 func HandleTechStack() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("Missing 'url' parameter"), http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "http://" + urlParam
-		}
-
-		technologies, err := extractTechnologies(urlParam)
+		technologies, err := extractTechnologies(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

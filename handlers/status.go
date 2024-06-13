@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptrace"
-	"strings"
 	"time"
 )
 
@@ -89,17 +88,13 @@ func fetchURL(url string) (*responseData, error) {
 
 func HandleStatus() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			http.Error(w, "missing 'url' parameter", http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "http://" + urlParam
-		}
-
-		data, err := fetchURL(urlParam)
+		data, err := fetchURL(rawURL.String())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

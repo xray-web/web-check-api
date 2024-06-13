@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -57,27 +55,13 @@ func ResolveTxt(domain string) ([]string, int, error) {
 
 func HandleMailConfig() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("URL parameter is required"), http.StatusBadRequest)
-			return
-		}
-
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "http://" + urlParam
-		}
-
-		parsedURL, err := url.Parse(urlParam)
+		rawURL, err := extractURL(r)
 		if err != nil {
-			JSONError(w, errors.New("Invalid URL"), http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
-		domain := parsedURL.Hostname()
-		if domain == "" {
-			domain = parsedURL.Path
-		}
 
-		mxRecords, rcode, err := ResolveMx(domain)
+		mxRecords, rcode, err := ResolveMx(rawURL.Hostname())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
@@ -88,7 +72,7 @@ func HandleMailConfig() http.Handler {
 			return
 		}
 
-		txtRecords, rcode, err := ResolveTxt(domain)
+		txtRecords, rcode, err := ResolveTxt(rawURL.Hostname())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

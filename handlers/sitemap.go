@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -30,17 +31,13 @@ type URL struct {
 
 func HandleSitemap() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("url query parameter is required"), http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "https://" + urlParam
-		}
-
-		sitemapURL := fmt.Sprintf("%s/sitemap.xml", urlParam)
+		sitemapURL := fmt.Sprintf("%s/sitemap.xml", rawURL.String())
 
 		sitemap, err := fetchSitemap(sitemapURL)
 		if err != nil {
@@ -51,7 +48,7 @@ func HandleSitemap() http.Handler {
 
 			// If sitemap not found, try to fetch it from robots.txt
 			if err.Error() == "404" {
-				sitemapURL, err = getSitemapURLFromRobotsTxt(urlParam)
+				sitemapURL, err = getSitemapURLFromRobotsTxt(rawURL.Hostname())
 				if err != nil {
 					JSON(w, map[string]string{"skipped": "No sitemap found"}, http.StatusOK)
 					return
@@ -122,7 +119,7 @@ func getSitemapURLFromRobotsTxt(baseURL string) (string, error) {
 		return "", errors.New("failed to fetch robots.txt")
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

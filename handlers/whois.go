@@ -120,13 +120,14 @@ func fetchFromMyAPI(hostname string) (map[string]interface{}, error) {
 
 func HandleWhois() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
-			http.Error(w, "missing 'url' parameter", http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		hostname, err := getBaseDomain(url)
+		hostname, err := getBaseDomain(rawURL.Hostname())
+
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Unable to parse URL: %v", err), http.StatusInternalServerError)
 			return

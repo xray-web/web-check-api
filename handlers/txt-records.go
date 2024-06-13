@@ -10,17 +10,13 @@ import (
 
 func HandleTXTRecords() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("url query parameter is required"), http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "https://" + urlParam
-		}
-
-		parsedURL, err := url.Parse(urlParam)
+		parsedURL, err := url.Parse(rawURL.String())
 		if err != nil {
 			JSONError(w, errors.New("invalid URL format"), http.StatusBadRequest)
 			return

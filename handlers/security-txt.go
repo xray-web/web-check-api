@@ -1,9 +1,8 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -44,25 +43,15 @@ func isPgpSigned(result string) bool {
 
 func HandleSecurityTxt() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("url query parameter is required"), http.StatusBadRequest)
-			return
-		}
-
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "https://" + urlParam
-		}
-
-		parsedURL, err := url.Parse(urlParam)
+		rawURL, err := extractURL(r)
 		if err != nil {
-			JSONError(w, errors.New("Invalid url query parameter"), http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
-		parsedURL.Path = ""
 
+		rawURL.Path = ""
 		for _, path := range SECURITY_TXT_PATHS {
-			result, err := fetchSecurityTxt(parsedURL, path)
+			result, err := fetchSecurityTxt(rawURL, path)
 			if err != nil {
 				JSONError(w, err, http.StatusInternalServerError)
 				return
@@ -106,7 +95,7 @@ func fetchSecurityTxt(baseURL *url.URL, path string) (string, error) {
 		return "", nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

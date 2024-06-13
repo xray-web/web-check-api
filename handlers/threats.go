@@ -232,35 +232,31 @@ func getCloudmersiveResult(urlParam string) (*CloudmersiveResponse, error) {
 
 func HandleThreats() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("url query parameter is required"), http.StatusBadRequest)
+		rawURL, err := extractURL(r)
+		if err != nil {
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "https://" + urlParam
-		}
-
-		urlHausResult, err := getUrlHausResult(urlParam)
+		urlHausResult, err := getUrlHausResult(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		phishTankResult, err := getPhishTankResult(urlParam)
+		phishTankResult, err := getPhishTankResult(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		cloudmersiveResult, err := getCloudmersiveResult(urlParam)
+		cloudmersiveResult, err := getCloudmersiveResult(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
 		}
 
-		googleSafeBrowsingResult, err := getGoogleSafeBrowsingResult(urlParam)
+		googleSafeBrowsingResult, err := getGoogleSafeBrowsingResult(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

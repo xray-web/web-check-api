@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -40,23 +38,13 @@ func ParseRobotsTxt(content string) map[string][]map[string]string {
 
 func HandleRobotsTxt() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
-			JSONError(w, errors.New("url query parameter is required"), http.StatusBadRequest)
-			return
-		}
-
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "http://" + urlParam
-		}
-
-		parsedURL, err := url.Parse(urlParam)
+		rawURL, err := extractURL(r)
 		if err != nil {
-			JSONError(w, errors.New("Invalid url query parameter"), http.StatusBadRequest)
+			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		robotsURL := fmt.Sprintf("%s://%s/robots.txt", parsedURL.Scheme, parsedURL.Host)
+		robotsURL := fmt.Sprintf("%s://%s/robots.txt", rawURL.Scheme, rawURL.Host)
 
 		resp, err := http.Get(robotsURL)
 		if err != nil {
