@@ -3,8 +3,9 @@ package handlers
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHandleDNSServer(t *testing.T) {
@@ -38,13 +39,8 @@ func TestHandleDNSServer(t *testing.T) {
 
 			HandleDNSServer().ServeHTTP(rec, req)
 
-			if rec.Code != tc.expectedCode {
-				t.Errorf("Expected status code %d, got %d", tc.expectedCode, rec.Code)
-			}
-
-			if strings.TrimSpace(rec.Body.String()) != tc.expectedBody {
-				t.Errorf("Expected body '%s', got '%s'", tc.expectedBody, strings.TrimSpace(rec.Body.String()))
-			}
+			assert.Equal(t, tc.expectedCode, rec.Code)
+			assert.JSONEq(t, tc.expectedBody, rec.Body.String())
 		})
 	}
 }

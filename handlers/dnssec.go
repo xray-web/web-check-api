@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 const dnsGoogleURL = "https://dns.google/resolve"
@@ -13,7 +12,7 @@ const dnsGoogleURL = "https://dns.google/resolve"
 func resolveDNS(domain string) (map[string]interface{}, error) {
 	dnsTypes := []string{"DNSKEY", "DS", "RRSIG"}
 	records := make(map[string]interface{})
-	domain = strings.TrimSuffix(domain, "")
+
 	for _, typ := range dnsTypes {
 
 		url := fmt.Sprintf("%s?name=%s&type=%s", dnsGoogleURL, url.PathEscape(domain), typ)
@@ -57,13 +56,13 @@ func resolveDNS(domain string) (map[string]interface{}, error) {
 
 func HandleDnsSec() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		domain := r.URL.Query().Get("url")
-		if domain == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		records, err := resolveDNS(domain)
+		records, err := resolveDNS(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

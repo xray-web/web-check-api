@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/chromedp/cdproto/network"
@@ -74,19 +73,16 @@ func HandleCookies() http.Handler {
 		ClientCookies []map[string]any `json:"clientCookies"`
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
-		}
-		// Ensure the URL includes a scheme
-		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-			url = "http://" + url
 		}
 
 		var headerCookies []string
 		var clientCookies []map[string]interface{}
 
+		url := rawURL.String()
 		// Fetch headers using http.Get
 		resp, err := http.Get(url)
 		if err != nil {

@@ -14,9 +14,9 @@ type HTTPSecurityResponse struct {
 }
 
 func checkHTTPSecurity(url string) (HTTPSecurityResponse, error) {
-	fullURL := "http://" + url
-
-	resp, err := http.Get(fullURL)
+	// fullURL := "http://" + url
+	// TODO(Lissy93): does this test require we set scheme to http?
+	resp, err := http.Get(url)
 	if err != nil {
 		return HTTPSecurityResponse{}, fmt.Errorf("error making request: %s", err.Error())
 	}
@@ -35,13 +35,13 @@ func checkHTTPSecurity(url string) (HTTPSecurityResponse, error) {
 
 func HandleHttpSecurity() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Query().Get("url")
-		if url == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		result, err := checkHTTPSecurity(url)
+		result, err := checkHTTPSecurity(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

@@ -4,37 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/aeden/traceroute"
 )
 
 func HandleTraceRoute() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlString := r.URL.Query().Get("url")
-		if urlString == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlString, "http://") && !strings.HasPrefix(urlString, "https://") {
-			urlString = "http://" + urlString
-		}
-
-		parsedURL, err := url.Parse(urlString)
-		if err != nil {
-			JSONError(w, ErrInvalidURL, http.StatusBadRequest)
-			return
-		}
-
-		host := parsedURL.Hostname()
-		if host == "" {
-			JSONError(w, errors.New("invalid URL provided: hostname not found"), http.StatusBadRequest)
-			return
-		}
-
-		result, err := traceroute.Traceroute(host, &traceroute.TracerouteOptions{})
+		result, err := traceroute.Traceroute(rawURL.Host, &traceroute.TracerouteOptions{})
 		if err != nil {
 			JSONError(w, errors.New("error performing traceroute"), http.StatusInternalServerError)
 			return

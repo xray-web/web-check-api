@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 func getRedirects(rawurl string) ([]string, error) {
@@ -34,17 +33,13 @@ func getRedirects(rawurl string) ([]string, error) {
 
 func HandleGetRedirects() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		urlParam := r.URL.Query().Get("url")
-		if urlParam == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		if !strings.HasPrefix(urlParam, "http://") && !strings.HasPrefix(urlParam, "https://") {
-			urlParam = "http://" + urlParam // Assuming HTTP by default
-		}
-
-		redirects, err := getRedirects(urlParam)
+		redirects, err := getRedirects(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

@@ -1,1 +1,54 @@
+# Config files and secrets
 .env
+.env.local
+.env.production
+.env.development
+.env.test
+
+# Build directories and files
+/build/
+/bin/
+/dist/
+
+# Dependencies
+/vendor/
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test outputs and coverage reports
+*.out
+
+# Compiled object files
+*.o
+*.a
+*.swp
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Go test binary and cache
+*.test
+/testdata/
+/*.test
+*.cover
+/.go
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE specific files
+.idea/
+*.iml
+*.code-workspace
+
+# Ignore compiled application binaries
+web-check-api-linux-*
+web-check-api-windows-*
+web-check-api-darwin-*

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHandleFirewall(t *testing.T) {
@@ -34,9 +36,7 @@ func TestHandleFirewall(t *testing.T) {
 
 			HandleFirewall().ServeHTTP(rec, req)
 
-			if rec.Code != tc.expectedCode {
-				t.Errorf("Expected status code %d, got %d", tc.expectedCode, rec.Code)
-			}
+			assert.Equal(t, tc.expectedCode, rec.Code)
 		})
 	}
 }

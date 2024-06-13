@@ -117,18 +117,13 @@ func sortAndExtractKeys(m map[string]int) []string {
 
 func HandleGetLinks() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		targetURL := r.URL.Query().Get("url")
-		if targetURL == "" {
+		rawURL, err := extractURL(r)
+		if err != nil {
 			JSONError(w, ErrMissingURLParameter, http.StatusBadRequest)
 			return
 		}
 
-		// Ensure the URL has a scheme
-		if !strings.HasPrefix(targetURL, "http://") && !strings.HasPrefix(targetURL, "https://") {
-			targetURL = "http://" + targetURL
-		}
-
-		internalLinks, externalLinks, err := getLinks(targetURL)
+		internalLinks, externalLinks, err := getLinks(rawURL.String())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return

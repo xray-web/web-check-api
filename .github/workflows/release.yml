@@ -1,0 +1,93 @@
+# Upon a new tag being pushed to git, this workflow will:
+# - Get the app version (from tag)
+# - Draft a new release with release notes
+# - Compile the Go binary for all platforms
+# - Attach the compiled binaries to the release
+name: 🏗️ Release Binaries
+
+on:
+  push:
+    tags:
+      - '^[0-9]+\.[0-9]+\.[0-9]+$'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to draft a release for (must already exist)"
+        required: true
+
+jobs:
+  create-draft-release:
+    name: Create Draft Release 1️⃣
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Tag Name 🏷️
+        id: get_tag_name
+        run: echo "::set-output name=tag_name::${GITHUB_REF##*/}"
+
+      - name: Create Draft Release 📝
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          release_name: Release ${{ github.event.inputs.tag || github.ref_name }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+
+      - name: Output new release URL ↗️
+        run: 'echo "Draft release URL: ${{ steps.create_release.outputs.html_url }}"'
+
+  compile-and-attach:
+    name: Compile and Attach Go Binary 2️⃣
+    needs: create-draft-release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: ["386", amd64, arm64]
+        exclude:
+          - goarch: "386"
+            goos: darwin
+          - goarch: arm64
+            goos: windows
+    steps:
+      - name: Checkout code 🛎️
+        uses: actions/checkout@v4
+
+      - name: Set up Go 🏗️
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Compile Go binaries 🔨
+        run: |
+          go build -ldflags "-X main.Version=${{ needs.create-draft-release.outputs.tag_name }}" -o web-check-api .
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
+      - name: Upload Go binaries ⤴️
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: web-check-api
+
+      - name: Attach binaries to release 📎
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ needs.create-draft-release.outputs.release_id }}
+          asset_path: web-check-api
+          asset_name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}

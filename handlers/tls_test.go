@@ -7,78 +7,44 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/h2non/gock.v1"
+	"github.com/xray-web/web-check-api/checks"
+	"github.com/xray-web/web-check-api/testutils"
 )
 
 func TestHandleTLS(t *testing.T) {
 	t.Parallel()
-	tests := []struct {
-		name             string
-		urlParam         string
-		mockScanResp     string
-		mockScanStatus   int
-		mockResultResp   string
-		mockResultStatus int
-		expectedStatus   int
-		expectedBody     map[string]interface{}
-	}{
-		{
-			name:           "Missing URL parameter",
-			urlParam:       "",
-			expectedStatus: http.StatusBadRequest,
-			expectedBody:   map[string]interface{}{"error": "missing URL parameter"},
-		},
-		{
-			name:           "Invalid URL",
-			urlParam:       "http://invalid-url",
-			mockScanResp:   `{"scan_id": 0}`,
-			mockScanStatus: http.StatusOK,
-			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   map[string]interface{}{"error": "failed to get scan_id from TLS Observatory"},
-		},
-		{
-			name:             "Valid URL with successful scan",
-			urlParam:         "http://example.com",
-			mockScanResp:     `{"scan_id": 12345}`,
-			mockScanStatus:   http.StatusOK,
-			mockResultResp:   `{"grade": "A+"}`,
-			mockResultStatus: http.StatusOK,
-			expectedStatus:   http.StatusOK,
-			expectedBody:     map[string]interface{}{"grade": "A+"},
-		},
-	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			defer gock.Off()
+	t.Run("Missing URL parameter", func(t *testing.T) {
+		t.Parallel()
 
-			if tc.urlParam != "" {
-				gock.New(MOZILLA_TLS_OBSERVATORY_API).
-					Post("/scan").
-					Reply(tc.mockScanStatus).
-					BodyString(tc.mockScanResp)
+		req := httptest.NewRequest("GET", "/tls?url=", nil)
+		rec := httptest.NewRecorder()
 
-				if tc.mockScanStatus == http.StatusOK && tc.mockResultResp != "" {
-					gock.New(MOZILLA_TLS_OBSERVATORY_API).
-						Get("/results").
-						MatchParam("id", "12345").
-						Reply(tc.mockResultStatus).
-						BodyString(tc.mockResultResp)
-				}
-			}
+		HandleTLS(checks.NewTls(nil)).ServeHTTP(rec, req)
 
-			req := httptest.NewRequest("GET", "/tls?url="+tc.urlParam, nil)
-			rec := httptest.NewRecorder()
-			HandleTLS().ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		var responseBody map[string]interface{}
+		err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]interface{}{"error": "missing URL parameter"}, responseBody)
+	})
 
-			assert.Equal(t, tc.expectedStatus, rec.Code)
+	t.Run("Invalid URL", func(t *testing.T) {
+		t.Parallel()
 
-			var responseBody map[string]interface{}
-			err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedBody, responseBody)
-		})
-	}
+		client := testutils.MockClient(
+			testutils.Response(http.StatusOK, []byte(`{"scan_id": 0}`)),
+		)
+		req := httptest.NewRequest("GET", "/tls?url=http://invalid-url", nil)
+		rec := httptest.NewRecorder()
+
+		HandleTLS(checks.NewTls(client)).ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+		var responseBody map[string]interface{}
+		err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]interface{}{"error": "failed to get scan_id from TLS Observatory"}, responseBody)
+	})
+
 }

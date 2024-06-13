@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHandleDNS(t *testing.T) {
@@ -34,9 +36,7 @@ func TestHandleDNS(t *testing.T) {
 
 			HandleDNS().ServeHTTP(rec, req)
 
-			if rec.Code != tc.expectedCode {
-				t.Errorf("Expected status code %d, got %d", tc.expectedCode, rec.Code)
-			}
+			assert.Equal(t, tc.expectedCode, rec.Code)
 		})
 	}
 }
