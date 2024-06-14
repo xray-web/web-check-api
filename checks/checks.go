@@ -8,11 +8,12 @@ import (
 )
 
 type Checks struct {
-	Carbon     *Carbon
-	LegacyRank *LegacyRank
-	Rank       *Rank
-	SocialTags *SocialTags
-	Tls        *Tls
+	Carbon      *Carbon
+	LegacyRank  *LegacyRank
+	LinkedPages *LinkedPages
+	Rank        *Rank
+	SocialTags  *SocialTags
+	Tls         *Tls
 }
 
 func NewChecks() *Checks {
@@ -20,10 +21,11 @@ func NewChecks() *Checks {
 		Timeout: 5 * time.Second,
 	}
 	return &Checks{
-		Carbon:     NewCarbon(client),
-		LegacyRank: NewLegacyRank(legacyrank.NewInMemoryStore()),
-		Rank:       NewRank(client),
-		SocialTags: NewSocialTags(client),
-		Tls:        NewTls(client),
+		Carbon:      NewCarbon(client),
+		LegacyRank:  NewLegacyRank(legacyrank.NewInMemoryStore()),
+		LinkedPages: NewLinkedPages(client),
+		Rank:        NewRank(client),
+		SocialTags:  NewSocialTags(client),
+		Tls:         NewTls(client),
 	}
 }
