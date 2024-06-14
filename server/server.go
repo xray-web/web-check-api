@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,10 +15,12 @@ type Server struct {
 	conf   config.Config
 	mux    *http.ServeMux
 	checks *checks.Checks
+	srv    *http.Server
 }
 
 func New(conf config.Config) *Server {
 	return &Server{
+		srv:    &http.Server{},
 		conf:   conf,
 		mux:    http.NewServeMux(),
 		checks: checks.NewChecks(),
@@ -49,6 +52,8 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/social-tags", handlers.HandleGetSocialTags(s.checks.SocialTags))
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS(s.checks.Tls))
 	s.mux.Handle("GET /api/trace-route", handlers.HandleTraceRoute())
+
+	s.srv.Handler = s.CORS(s.mux)
 }
 
 func (s *Server) Run() error {
@@ -56,5 +61,10 @@ func (s *Server) Run() error {
 
 	addr := fmt.Sprintf("%s:%s", s.conf.Host, s.conf.Port)
 	log.Printf("Server started, listening on: %v\n", addr)
-	return http.ListenAndServe(addr, s.CORS(s.mux))
+	s.srv.Addr = addr
+	return s.srv.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.srv.Shutdown(ctx)
 }
