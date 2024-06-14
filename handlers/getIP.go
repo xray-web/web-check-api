@@ -1,29 +1,12 @@
 package handlers
 
 import (
-	"net"
 	"net/http"
+
+	"github.com/xray-web/web-check-api/checks"
 )
 
-func lookupAsync(address string) (map[string]interface{}, error) {
-	ip, err := net.LookupIP(address)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]interface{})
-	if len(ip) > 0 {
-		result["ip"] = ip[0].String()
-		result["family"] = 4
-	} else {
-		result["ip"] = ""
-		result["family"] = nil
-	}
-
-	return result, nil
-}
-
-func HandleGetIP() http.Handler {
+func HandleGetIP(i *checks.Ip) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rawURL, err := extractURL(r)
 		if err != nil {
@@ -31,7 +14,7 @@ func HandleGetIP() http.Handler {
 			return
 		}
 
-		result, err := lookupAsync(rawURL.Hostname())
+		result, err := i.Lookup(r.Context(), rawURL.Hostname())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
