@@ -9,6 +9,7 @@ import (
 
 type Checks struct {
 	Carbon     *Carbon
+	IpAddress  *Ip
 	LegacyRank *LegacyRank
 	Rank       *Rank
 	SocialTags *SocialTags
@@ -21,6 +22,7 @@ func NewChecks() *Checks {
 	}
 	return &Checks{
 		Carbon:     NewCarbon(client),
+		IpAddress:  NewIp(NewNetIp()),
 		LegacyRank: NewLegacyRank(legacyrank.NewInMemoryStore()),
 		Rank:       NewRank(client),
 		SocialTags: NewSocialTags(client),
