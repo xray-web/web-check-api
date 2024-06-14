@@ -9,11 +9,12 @@ import (
 
 type Checks struct {
 	Carbon     *Carbon
+	Headers    *Headers
+	IpAddress  *Ip
 	LegacyRank *LegacyRank
 	Rank       *Rank
 	SocialTags *SocialTags
 	Tls        *Tls
-	Headers    *Headers
 }
 
 func NewChecks() *Checks {
@@ -22,10 +23,11 @@ func NewChecks() *Checks {
 	}
 	return &Checks{
 		Carbon:     NewCarbon(client),
+		Headers:    NewHeaders(client),
+		IpAddress:  NewIp(NewNetIp()),
 		LegacyRank: NewLegacyRank(legacyrank.NewInMemoryStore()),
 		Rank:       NewRank(client),
 		SocialTags: NewSocialTags(client),
 		Tls:        NewTls(client),
-		Headers:    NewHeaders(client),
 	}
 }
