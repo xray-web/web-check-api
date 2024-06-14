@@ -1,0 +1,2 @@
+ignore:
+  - checks/clients/ip/ip.go  # this contains go std lib code wrapped for interfaces, not worth testing
