@@ -32,7 +32,7 @@ func (s *Server) routes() {
 
 	s.mux.Handle("GET /health", HealthCheck())
 
-	s.mux.Handle("GET /api/block-lists", handlers.HandleBlockLists())
+	s.mux.Handle("GET /api/block-lists", handlers.HandleBlockLists(s.checks.BlockList))
 	s.mux.Handle("GET /api/carbon", handlers.HandleCarbon(s.checks.Carbon))
 	s.mux.Handle("GET /api/cookies", handlers.HandleCookies())
 	s.mux.Handle("GET /api/dns-server", handlers.HandleDNSServer())
@@ -40,11 +40,11 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/dnssec", handlers.HandleDnsSec())
 	s.mux.Handle("GET /api/firewall", handlers.HandleFirewall())
 	s.mux.Handle("GET /api/get-ip", handlers.HandleGetIP(s.checks.IpAddress))
-	s.mux.Handle("GET /api/headers", handlers.HandleGetHeaders())
+	s.mux.Handle("GET /api/headers", handlers.HandleGetHeaders(s.checks.Headers))
 	s.mux.Handle("GET /api/hsts", handlers.HandleHsts(s.checks.Hsts))
 	s.mux.Handle("GET /api/http-security", handlers.HandleHttpSecurity())
 	s.mux.Handle("GET /api/legacy-rank", handlers.HandleLegacyRank(s.checks.LegacyRank))
-	s.mux.Handle("GET /api/linked-pages", handlers.HandleGetLinks())
+	s.mux.Handle("GET /api/linked-pages", handlers.HandleGetLinks(s.checks.LinkedPages))
 	s.mux.Handle("GET /api/ports", handlers.HandleGetPorts())
 	s.mux.Handle("GET /api/quality", handlers.HandleGetQuality())
 	s.mux.Handle("GET /api/rank", handlers.HandleGetRank(s.checks.Rank))
