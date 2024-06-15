@@ -41,7 +41,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/firewall", handlers.HandleFirewall())
 	s.mux.Handle("GET /api/get-ip", handlers.HandleGetIP(s.checks.IpAddress))
 	s.mux.Handle("GET /api/headers", handlers.HandleGetHeaders())
-	s.mux.Handle("GET /api/hsts", handlers.HandleHsts())
+	s.mux.Handle("GET /api/hsts", handlers.HandleHsts(s.checks.Hsts))
 	s.mux.Handle("GET /api/http-security", handlers.HandleHttpSecurity())
 	s.mux.Handle("GET /api/legacy-rank", handlers.HandleLegacyRank(s.checks.LegacyRank))
 	s.mux.Handle("GET /api/linked-pages", handlers.HandleGetLinks())

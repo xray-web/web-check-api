@@ -14,6 +14,7 @@ type Checks struct {
 	Rank       *Rank
 	SocialTags *SocialTags
 	Tls        *Tls
+	Hsts       *Hsts
 }
 
 func NewChecks() *Checks {
@@ -27,5 +28,6 @@ func NewChecks() *Checks {
 		Rank:       NewRank(client),
 		SocialTags: NewSocialTags(client),
 		Tls:        NewTls(client),
+		Hsts:       NewHsts(client),
 	}
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,18 +10,15 @@ import (
 
 func TestHandleHsts(t *testing.T) {
 	t.Parallel()
-	req := httptest.NewRequest("GET", "/check-hsts?url=example.com", nil)
-	rec := httptest.NewRecorder()
-	HandleHsts().ServeHTTP(rec, req)
 
-	assert.Equal(t, http.StatusOK, rec.Code)
+	t.Run("missing URL parameter", func(t *testing.T) {
+		t.Parallel()
+		req := httptest.NewRequest(http.MethodGet, "/check-hsts", nil)
+		rec := httptest.NewRecorder()
 
-	var response HSTSResponse
-	err := json.Unmarshal(rec.Body.Bytes(), &response)
-	assert.NoError(t, err)
+		HandleHsts(nil).ServeHTTP(rec, req)
 
-	assert.NotNil(t, response)
-	assert.Equal(t, "Site does not serve any HSTS headers.", response.Message)
-	assert.False(t, response.Compatible)
-	assert.Empty(t, response.HSTSHeader)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.JSONEq(t, `{"error": "missing URL parameter"}`, rec.Body.String())
+	})
 }
