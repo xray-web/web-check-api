@@ -53,7 +53,10 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/tls", handlers.HandleTLS(s.checks.Tls))
 	s.mux.Handle("GET /api/trace-route", handlers.HandleTraceRoute())
 
-	s.srv.Handler = s.CORS(s.mux)
+	s.srv.Handler = middlewares(s.mux,
+		s.CORS,
+		NewAuth(s.conf).Authenticate,
+	)
 }
 
 func (s *Server) Run() error {
