@@ -9,7 +9,7 @@ import (
 )
 
 type Checks struct {
-  BlockList  *BlockList
+	BlockList   *BlockList
 	Carbon      *Carbon
 	Headers     *Headers
 	IpAddress   *Ip
@@ -25,9 +25,9 @@ func NewChecks() *Checks {
 		Timeout: 5 * time.Second,
 	}
 	return &Checks{
-		BlockList:  NewBlockList(&ip.NetDNSLookup{}),
+		BlockList:   NewBlockList(&ip.NetDNSLookup{}),
 		Carbon:      NewCarbon(client),
-		Headers:    NewHeaders(client),
+		Headers:     NewHeaders(client),
 		IpAddress:   NewIp(NewNetIp()),
 		LegacyRank:  NewLegacyRank(legacyrank.NewInMemoryStore()),
 		LinkedPages: NewLinkedPages(client),
