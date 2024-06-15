@@ -44,7 +44,7 @@ func (s *Server) routes() {
 	s.mux.Handle("GET /api/hsts", handlers.HandleHsts())
 	s.mux.Handle("GET /api/http-security", handlers.HandleHttpSecurity())
 	s.mux.Handle("GET /api/legacy-rank", handlers.HandleLegacyRank(s.checks.LegacyRank))
-	s.mux.Handle("GET /api/linked-pages", handlers.HandleGetLinks())
+	s.mux.Handle("GET /api/linked-pages", handlers.HandleGetLinks(s.checks.LinkedPages))
 	s.mux.Handle("GET /api/ports", handlers.HandleGetPorts())
 	s.mux.Handle("GET /api/quality", handlers.HandleGetQuality())
 	s.mux.Handle("GET /api/rank", handlers.HandleGetRank(s.checks.Rank))
