@@ -14,7 +14,7 @@ func TestList(t *testing.T) {
 
 	c := testutils.MockClient(&http.Response{
 		Header: http.Header{
-			"Cache-Control":    {"private, max-age=0"},
+			"Cache-Control":    {"private", "max-age=0"},
 			"X-Xss-Protection": {"0"},
 		},
 	})
@@ -23,6 +23,6 @@ func TestList(t *testing.T) {
 	actual, err := h.List(context.Background(), "example.com")
 	assert.NoError(t, err)
 
-	assert.Equal(t, "private, max-age=0", actual["Cache-Control"])
-	assert.Equal(t, "0", actual["X-Xss-Protection"])
+	assert.Equal(t, []string{"private", "max-age=0"}, actual["Cache-Control"])
+	assert.Equal(t, []string{"0"}, actual["X-Xss-Protection"])
 }
