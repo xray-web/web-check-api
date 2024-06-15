@@ -12,6 +12,7 @@ type Checks struct {
 	BlockList   *BlockList
 	Carbon      *Carbon
 	Headers     *Headers
+	Hsts        *Hsts
 	IpAddress   *Ip
 	LegacyRank  *LegacyRank
 	LinkedPages *LinkedPages
@@ -28,6 +29,7 @@ func NewChecks() *Checks {
 		BlockList:   NewBlockList(&ip.NetDNSLookup{}),
 		Carbon:      NewCarbon(client),
 		Headers:     NewHeaders(client),
+		Hsts:        NewHsts(client),
 		IpAddress:   NewIp(NewNetIp()),
 		LegacyRank:  NewLegacyRank(legacyrank.NewInMemoryStore()),
 		LinkedPages: NewLinkedPages(client),

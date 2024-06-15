@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -8,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xray-web/web-check-api/config"
-	"golang.org/x/net/context"
 )
 
 func TestServer(t *testing.T) {
