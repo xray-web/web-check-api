@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/xray-web/web-check-api/checks/clients/ip"
 	"github.com/xray-web/web-check-api/checks/store/legacyrank"
 )
 
 type Checks struct {
+	BlockList   *BlockList
 	Carbon      *Carbon
 	Headers     *Headers
 	IpAddress   *Ip
@@ -23,8 +25,9 @@ func NewChecks() *Checks {
 		Timeout: 5 * time.Second,
 	}
 	return &Checks{
+		BlockList:   NewBlockList(&ip.NetDNSLookup{}),
 		Carbon:      NewCarbon(client),
-		Headers:    NewHeaders(client),
+		Headers:     NewHeaders(client),
 		IpAddress:   NewIp(NewNetIp()),
 		LegacyRank:  NewLegacyRank(legacyrank.NewInMemoryStore()),
 		LinkedPages: NewLinkedPages(client),

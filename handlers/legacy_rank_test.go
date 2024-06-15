@@ -16,7 +16,7 @@ func TestHandleLegacyRank(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/legacy-rank", nil)
 		rec := httptest.NewRecorder()
 
-		HandleBlockLists().ServeHTTP(rec, req)
+		HandleLegacyRank(nil).ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.JSONEq(t, `{"error": "missing URL parameter"}`, rec.Body.String())
