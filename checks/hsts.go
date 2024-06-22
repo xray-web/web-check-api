@@ -8,17 +8,6 @@ import (
 	"unicode"
 )
 
-const (
-	StrictTransportSecurity = "Strict-Transport-Security"
-	includeSubDomains       = "includeSubDomains"
-	preload                 = "preload"
-	NilHeadersError         = "Site does not serve any HSTS headers."
-	MaxAgeError             = "HSTS max-age is less than 10886400."
-	SubdomainsError         = "HSTS header does not include all subdomains."
-	PreloadError            = "HSTS header does not contain the preload directive."
-	HstsSuccess             = "Site is compatible with the HSTS preload list!"
-)
-
 type HSTSResponse struct {
 	Message    string `json:"message"`
 	Compatible bool   `json:"compatible"`
@@ -45,37 +34,41 @@ func (h *Hsts) Validate(ctx context.Context, url string) (*HSTSResponse, error) 
 	}
 	defer resp.Body.Close()
 
-	hstsHeader := resp.Header.Get(StrictTransportSecurity)
+	hstsHeader := resp.Header.Get("Strict-Transport-Security")
 	if hstsHeader == "" {
-		return &HSTSResponse{
-			Message: NilHeadersError,
-		}, nil
+		return &HSTSResponse{Message: "Site does not serve any HSTS headers."}, nil
 	}
 
-	maxAge := extractMaxAgeFromHeader(hstsHeader)
-	if maxAge == "" {
-		return &HSTSResponse{Message: MaxAgeError}, nil
+	if !strings.Contains(hstsHeader, "max-age") {
+		return &HSTSResponse{Message: "HSTS max-age is less than 10886400."}, nil
 	}
 
-	maxAgeInt, err := convertMaxAgeStringToInt(maxAge)
+	var maxAgeString string
+	for _, h := range strings.Split(hstsHeader, " ") {
+		if strings.Contains(h, "max-age=") {
+			maxAgeString = extractMaxAgeFromHeader(h)
+		}
+	}
+
+	maxAge, err := strconv.Atoi(maxAgeString)
 	if err != nil {
 		return nil, err
 	}
 
-	if maxAgeInt < 10886400 {
-		return &HSTSResponse{Message: MaxAgeError}, nil
+	if maxAge < 10886400 {
+		return &HSTSResponse{Message: "HSTS max-age is less than 10886400."}, nil
 	}
 
-	if !strings.Contains(hstsHeader, includeSubDomains) {
-		return &HSTSResponse{Message: SubdomainsError}, nil
+	if !strings.Contains(hstsHeader, "includeSubDomains") {
+		return &HSTSResponse{Message: "HSTS header does not include all subdomains."}, nil
 	}
 
-	if !strings.Contains(hstsHeader, preload) {
-		return &HSTSResponse{Message: PreloadError}, nil
+	if !strings.Contains(hstsHeader, "preload") {
+		return &HSTSResponse{Message: "HSTS header does not contain the preload directive."}, nil
 	}
 
 	return &HSTSResponse{
-		Message:    HstsSuccess,
+		Message:    "Site is compatible with the HSTS preload list!",
 		Compatible: true,
 		HSTSHeader: hstsHeader,
 	}, nil
@@ -91,8 +84,4 @@ func extractMaxAgeFromHeader(header string) string {
 	}
 
 	return maxAge.String()
-}
-
-func convertMaxAgeStringToInt(maxAge string) (int, error) {
-	return strconv.Atoi(maxAge)
 }

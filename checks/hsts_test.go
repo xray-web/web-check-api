@@ -16,13 +16,13 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		client := testutils.MockClient(&http.Response{
-			Header: http.Header{StrictTransportSecurity: []string{""}}})
+			Header: http.Header{"Strict-Transport-Security": []string{""}}})
 		h := NewHsts(client)
 
 		actual, err := h.Validate(context.Background(), "test.com")
 		assert.NoError(t, err)
 
-		assert.Equal(t, NilHeadersError, actual.Message)
+		assert.Equal(t, "Site does not serve any HSTS headers.", actual.Message)
 		assert.False(t, actual.Compatible)
 		assert.Empty(t, actual.HSTSHeader)
 	})
@@ -31,13 +31,13 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		client := testutils.MockClient(&http.Response{
-			Header: http.Header{StrictTransportSecurity: []string{"includeSubDomains; preload"}}})
+			Header: http.Header{"Strict-Transport-Security": []string{"includeSubDomains; preload"}}})
 		h := NewHsts(client)
 
 		actual, err := h.Validate(context.Background(), "test.com")
 		assert.NoError(t, err)
 
-		assert.Equal(t, MaxAgeError, actual.Message)
+		assert.Equal(t, "HSTS max-age is less than 10886400.", actual.Message)
 		assert.False(t, actual.Compatible)
 		assert.Empty(t, actual.HSTSHeader)
 	})
@@ -46,13 +46,13 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		client := testutils.MockClient(&http.Response{
-			Header: http.Header{StrictTransportSecurity: []string{"max-age=47; includeSubDomains; preload"}}})
+			Header: http.Header{"Strict-Transport-Security": []string{"max-age=47; includeSubDomains; preload"}}})
 		h := NewHsts(client)
 
 		actual, err := h.Validate(context.Background(), "test.com")
 		assert.NoError(t, err)
 
-		assert.Equal(t, MaxAgeError, actual.Message)
+		assert.Equal(t, "HSTS max-age is less than 10886400.", actual.Message)
 		assert.False(t, actual.Compatible)
 		assert.Empty(t, actual.HSTSHeader)
 	})
@@ -61,13 +61,13 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		client := testutils.MockClient(&http.Response{
-			Header: http.Header{StrictTransportSecurity: []string{"max-age=47474747; preload"}}})
+			Header: http.Header{"Strict-Transport-Security": []string{"max-age=47474747; preload"}}})
 		h := NewHsts(client)
 
 		actual, err := h.Validate(context.Background(), "test.com")
 		assert.NoError(t, err)
 
-		assert.Equal(t, SubdomainsError, actual.Message)
+		assert.Equal(t, "HSTS header does not include all subdomains.", actual.Message)
 		assert.False(t, actual.Compatible)
 		assert.Empty(t, actual.HSTSHeader)
 	})
@@ -76,13 +76,13 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		client := testutils.MockClient(&http.Response{
-			Header: http.Header{StrictTransportSecurity: []string{"max-age=47474747; includeSubDomains"}}})
+			Header: http.Header{"Strict-Transport-Security": []string{"max-age=47474747; includeSubDomains"}}})
 		h := NewHsts(client)
 
 		actual, err := h.Validate(context.Background(), "test.com")
 		assert.NoError(t, err)
 
-		assert.Equal(t, PreloadError, actual.Message)
+		assert.Equal(t, "HSTS header does not contain the preload directive.", actual.Message)
 		assert.False(t, actual.Compatible)
 		assert.Empty(t, actual.HSTSHeader)
 	})
@@ -91,13 +91,13 @@ func TestValidate(t *testing.T) {
 		t.Parallel()
 
 		client := testutils.MockClient(&http.Response{
-			Header: http.Header{StrictTransportSecurity: []string{"max-age=47474747; includeSubDomains; preload"}}})
+			Header: http.Header{"Strict-Transport-Security": []string{"max-age=47474747; includeSubDomains; preload"}}})
 		h := NewHsts(client)
 
 		actual, err := h.Validate(context.Background(), "test.com")
 		assert.NoError(t, err)
 
-		assert.Equal(t, HstsSuccess, actual.Message)
+		assert.Equal(t, "Site is compatible with the HSTS preload list!", actual.Message)
 		assert.True(t, actual.Compatible)
 		assert.NotEmpty(t, actual.HSTSHeader)
 	})
@@ -111,7 +111,7 @@ func TestExtractMaxAgeFromHeader(t *testing.T) {
 		header   string
 		expected string
 	}{
-		{"give valid header", "max-age=47474747; includeSubDomains; preload", "47474747"},
+		{"give valid header", "max-age=47474747;", "47474747"},
 		{"given an empty header", "", ""},
 	} {
 		tc := tc
