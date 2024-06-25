@@ -49,3 +49,10 @@ func HealthCheck() http.Handler {
 		json.NewEncoder(w).Encode(Response{Status: "ok"})
 	})
 }
+
+func middlewares(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
+	for _, m := range middlewares {
+		h = m(h)
+	}
+	return h
+}

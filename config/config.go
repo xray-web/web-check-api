@@ -10,6 +10,7 @@ type Config struct {
 	Host          string
 	Port          string
 	AllowedOrigin string
+	AuthProvider  string
 }
 
 func New() Config {
@@ -19,6 +20,7 @@ func New() Config {
 		Host:          host,
 		Port:          port,
 		AllowedOrigin: getEnvDefault("ALLOWED_ORIGINS", fmt.Sprintf("http://%s:%s", host, port)),
+		AuthProvider:  getEnvDefault("AUTH_PROVIDER", "none"),
 	}
 }
 
