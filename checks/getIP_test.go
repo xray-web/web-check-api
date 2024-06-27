@@ -6,24 +6,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xray-web/web-check-api/checks/clients/ip"
 )
 
 func TestLookup(t *testing.T) {
 	t.Parallel()
 
-	ipAddresses := []IpAddress{
-		{net.ParseIP("216.58.201.110"), 4},
-		{net.ParseIP("2a00:1450:4009:826::200e"), 6},
-	}
-	i := NewIp(IpGetterFunc(func(ctx context.Context, host string) ([]IpAddress, error) {
-		return ipAddresses, nil
+	n := NewNetIp(ip.LookupFunc(func(ctx context.Context, network string, host string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("216.58.201.110")}, nil
 	}))
-	actual, err := i.Lookup(context.Background(), "google.com")
+	actual, err := n.GetIp(context.Background(), "google.com")
 	assert.NoError(t, err)
 
-	assert.Equal(t, ipAddresses[0].Address, actual[0].Address)
-	assert.Equal(t, 4, actual[0].Family)
-
-	assert.Equal(t, ipAddresses[1].Address, actual[1].Address)
-	assert.Equal(t, 6, actual[1].Family)
+	assert.Contains(t, actual, IpAddress{Address: net.ParseIP("216.58.201.110"), Family: 4})
 }

@@ -3,6 +3,8 @@ package checks
 import (
 	"context"
 	"net"
+
+	"github.com/xray-web/web-check-api/checks/clients/ip"
 )
 
 type IpAddress struct {
@@ -10,32 +12,21 @@ type IpAddress struct {
 	Family  int    `json:"family"`
 }
 
-type IpGetter interface {
-	GetIp(ctx context.Context, host string) ([]IpAddress, error)
+type NetIp struct {
+	lookup ip.Lookup
 }
 
-type IpGetterFunc func(ctx context.Context, host string) ([]IpAddress, error)
-
-func (f IpGetterFunc) GetIp(ctx context.Context, host string) ([]IpAddress, error) {
-	return f(ctx, host)
-}
-
-type NetIp struct{}
-
-func NewNetIp() *NetIp {
-	return &NetIp{}
+func NewNetIp(lookup ip.Lookup) *NetIp {
+	return &NetIp{lookup: lookup}
 }
 
 func (l *NetIp) GetIp(ctx context.Context, host string) ([]IpAddress, error) {
-	resolver := &net.Resolver{
-		PreferGo: true,
-	}
-	ip4, err := resolver.LookupIP(ctx, "ip4", host)
+	ip4, err := l.lookup.LookupIP(ctx, "ip4", host)
 	if err != nil {
-		return nil, err
+		// do nothing
 	}
-	ip6, err := resolver.LookupIP(ctx, "ip6", host)
-	if err != nil {
+	ip6, err := l.lookup.LookupIP(ctx, "ip6", host)
+	if err != nil && len(ip4) == 0 && len(ip6) == 0 {
 		return nil, err
 	}
 
@@ -48,16 +39,4 @@ func (l *NetIp) GetIp(ctx context.Context, host string) ([]IpAddress, error) {
 	}
 
 	return ipAddresses, nil
-}
-
-type Ip struct {
-	getter IpGetter
-}
-
-func NewIp(l IpGetter) *Ip {
-	return &Ip{getter: l}
-}
-
-func (i *Ip) Lookup(ctx context.Context, host string) ([]IpAddress, error) {
-	return i.getter.GetIp(ctx, host)
 }

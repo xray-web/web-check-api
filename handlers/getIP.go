@@ -6,7 +6,7 @@ import (
 	"github.com/xray-web/web-check-api/checks"
 )
 
-func HandleGetIP(i *checks.Ip) http.Handler {
+func HandleGetIP(i *checks.NetIp) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rawURL, err := extractURL(r)
 		if err != nil {
@@ -14,7 +14,7 @@ func HandleGetIP(i *checks.Ip) http.Handler {
 			return
 		}
 
-		result, err := i.Lookup(r.Context(), rawURL.Hostname())
+		result, err := i.GetIp(r.Context(), rawURL.Hostname())
 		if err != nil {
 			JSONError(w, err, http.StatusInternalServerError)
 			return
