@@ -1,6 +1,6 @@
 module github.com/xray-web/web-check-api
 
-go 1.22.4
+go 1.25.0
 
 require (
 	github.com/chromedp/cdproto v0.0.0-20240602235142-49d0e97b7881
@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/andybalholm/cascadia v1.3.4 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
@@ -22,10 +22,10 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.9.2
+	github.com/PuerkitoBio/goquery v1.13.0
 	github.com/aeden/traceroute v0.0.0-20210211061815-03f5f7cb7908
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/net v0.26.0
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/net v0.58.0
+	golang.org/x/sys v0.47.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
