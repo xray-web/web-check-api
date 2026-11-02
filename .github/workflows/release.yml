@@ -24,7 +24,7 @@ jobs:
       tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -62,7 +62,7 @@ jobs:
             goos: windows
     steps:
       - name: Checkout code 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Go 🏗️
         uses: actions/setup-go@v5

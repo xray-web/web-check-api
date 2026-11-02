@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: 🛎️ Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 🗂️ Make Docker Meta
         id: meta
