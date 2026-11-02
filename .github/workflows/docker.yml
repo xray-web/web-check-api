@@ -24,7 +24,7 @@ jobs:
 
       - name: 🗂️ Make Docker Meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.DH_IMAGE }}
