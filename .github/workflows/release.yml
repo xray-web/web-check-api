@@ -77,7 +77,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Upload Go binaries ⤴️
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-check-api-${{ matrix.goos }}-${{ matrix.goarch }}
           path: web-check-api
