@@ -61,7 +61,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🚦 Check Registry Status
-        uses: crazy-max/ghaction-docker-status@v3
+        uses: crazy-max/ghaction-docker-status@v4
 
       - name: ⚒️ Build and push
         uses: docker/build-push-action@v6
